@@ -46,7 +46,7 @@ class _ServiceCardState extends State<ServiceCard> {
                 child: Image.asset(
                   widget.service.imageUrl,
                   width: double.infinity,
-                  height: 120, // Fixed height for image
+                  height: 120,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -76,12 +76,11 @@ class _ServiceCardState extends State<ServiceCard> {
             ],
           ),
 
-          // Service details
+          // Service details - Compact padding
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   widget.service.title,
@@ -93,7 +92,7 @@ class _ServiceCardState extends State<ServiceCard> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 2),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
