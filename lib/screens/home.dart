@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/card.dart';
 import 'package:homecarecrm/data.dart';
+import 'package:homecarecrm/screens/slidefrawer/slidedrawer.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -9,12 +10,13 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      drawer: const SlideDrawer(), // Add drawer here
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Container(
-              margin: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(18),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -25,29 +27,35 @@ class HomePage extends StatelessWidget {
                     Color(0xFF1E88E5),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.menu,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                  Builder(
+                    builder: (BuildContext context) {
+                      return IconButton(
+                        onPressed: () {
+                          Scaffold.of(context).openDrawer();
+                        },
+                        icon: const Icon(
+                          Icons.menu,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      );
+                    },
                   ),
                   const Text(
                     'Home',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -55,7 +63,7 @@ class HomePage extends StatelessWidget {
                     child: const Icon(
                       Icons.notifications,
                       color: Color(0xFF0D6EFD),
-                      size: 24,
+                      size: 22,
                     ),
                   ),
                 ],
@@ -63,10 +71,11 @@ class HomePage extends StatelessWidget {
             ),
 
             // Category Icons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+            SizedBox(
+              height: 110,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
                 children: [
                   _buildCategoryIcon(
                     icon: Icons.handshake_outlined,
@@ -74,29 +83,72 @@ class HomePage extends StatelessWidget {
                     color: const Color(0xFFE3F2FD),
                     iconColor: const Color(0xFF2196F3),
                   ),
+                  const SizedBox(width: 20),
                   _buildCategoryIcon(
                     icon: Icons.favorite_border,
                     label: 'Home Care',
                     color: const Color(0xFFFFEBEE),
                     iconColor: const Color(0xFFE91E63),
                   ),
+                  const SizedBox(width: 20),
                   _buildCategoryIcon(
                     icon: Icons.volunteer_activism,
                     label: 'Personal Care',
                     color: const Color(0xFFFCE4EC),
                     iconColor: const Color(0xFFE91E63),
                   ),
+                  const SizedBox(width: 20),
                   _buildCategoryIcon(
                     icon: Icons.family_restroom,
                     label: 'Family Care',
                     color: const Color(0xFFFFF3E0),
                     iconColor: const Color(0xFFFF9800),
                   ),
+                  const SizedBox(width: 20),
+                  _buildCategoryIcon(
+                    icon: Icons.accessibility_new_outlined,
+                    label: 'Disability Care',
+                    color: const Color(0xFFE8F5E9),
+                    iconColor: const Color(0xFF4CAF50),
+                  ),
+                  const SizedBox(width: 20),
+                  _buildCategoryIcon(
+                    icon: Icons.child_care_rounded,
+                    label: 'Child Care',
+                    color: const Color(0xFFF3E5F5),
+                    iconColor: const Color(0xFF9C27B0),
+                  ),
+                  const SizedBox(width: 20),
+                  _buildCategoryIcon(
+                    icon: Icons.pets_outlined,
+                    label: 'Pet Care',
+                    color: const Color.fromARGB(255, 229, 153, 109),
+                    iconColor: const Color.fromARGB(255, 176, 89, 39),
+                  ),
+                  _buildCategoryIcon(
+                    icon: Icons.pets_outlined,
+                    label: 'Medical Care',
+                    color: const Color(0xFFF3E5F5),
+                    iconColor: const Color(0xFF9C27B0),
+                  ),
+                  _buildCategoryIcon(
+                    icon: Icons.pets_outlined,
+                    label: 'Meal Support',
+                    color: const Color(0xFFF3E5F5),
+                    iconColor: const Color(0xFF9C27B0),
+                  ),
+                  _buildCategoryIcon(
+                    icon: Icons.pets_outlined,
+                    label: 'Emergency Care',
+                    color: const Color(0xFFF3E5F5),
+                    iconColor: const Color(0xFF9C27B0),
+                  ),
+
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
+
 
             // Popular Services Header
             Padding(
@@ -107,7 +159,7 @@ class HomePage extends StatelessWidget {
                   const Text(
                     'Popular Services',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     ),
@@ -117,7 +169,7 @@ class HomePage extends StatelessWidget {
                     child: const Text(
                       'View All',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Color(0xFF0D6EFD),
                         fontWeight: FontWeight.w600,
                       ),
@@ -160,8 +212,8 @@ class HomePage extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 70,
-          height: 70,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
             color: color,
             shape: BoxShape.circle,
