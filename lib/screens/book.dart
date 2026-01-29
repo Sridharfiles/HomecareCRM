@@ -1,14 +1,12 @@
 // book.dart
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/card.dart';
+import 'package:homecarecrm/screens/confirmbook.dart';
 
 class BookPage extends StatefulWidget {
   final ServiceModel service;
 
-  const BookPage({
-    Key? key,
-    required this.service,
-  }) : super(key: key);
+  const BookPage({Key? key, required this.service}) : super(key: key);
 
   @override
   State<BookPage> createState() => _BookPageState();
@@ -208,40 +206,41 @@ class _BookPageState extends State<BookPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
-                    children: widget.service.features.map((feature) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(top: 2),
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4CAF50),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                feature,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Color(0xFF2C3E50),
-                                  height: 1.4,
+                    children:
+                        widget.service.features.map((feature) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 2),
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4CAF50),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    feature,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF2C3E50),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        }).toList(),
                   ),
                 ),
 
@@ -271,15 +270,18 @@ class _BookPageState extends State<BookPage> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle booking action
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Booking ${widget.service.title}...'),
-                          backgroundColor: const Color(0xFF0D6EFD),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                      // Navigate to confirm booking page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ConfirmBookingScreen(
+                                service: widget.service,
+                                selectedDate: DateTime.now(),
+                                selectedTime: TimeOfDay.now(),
+                                selectedHours:
+                                    1, // Default to 1 hour, can be made dynamic
+                              ),
                         ),
                       );
                     },
