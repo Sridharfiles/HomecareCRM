@@ -361,7 +361,15 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PaymentScreen(),
+                              builder:
+                                  (context) => PaymentScreen(
+                                    service: widget.service,
+                                    selectedDate: _getSelectedDate(),
+                                    selectedTime: _getSelectedTime(),
+                                    selectedHours: int.parse(
+                                      selectedHours.split(' ')[0],
+                                    ),
+                                  ),
                             ),
                           );
                         }
@@ -384,6 +392,26 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  DateTime _getSelectedDate() {
+    // Get current date and add the selected date index
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day + selectedDateIndex);
+  }
+
+  TimeOfDay _getSelectedTime() {
+    // Parse the selected time slot (e.g., "08:30 am")
+    final parts = selectedTimeSlot.split(' ');
+    final timeParts = parts[0].split(':');
+    final hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1]);
+    final isAm = parts[1].toLowerCase() == 'am';
+
+    return TimeOfDay(
+      hour: isAm && hour == 12 ? 0 : (!isAm && hour != 12 ? hour + 12 : hour),
+      minute: minute,
     );
   }
 }

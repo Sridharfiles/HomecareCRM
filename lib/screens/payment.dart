@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'appointmentconfirmation.dart';
+import 'serviceconfirmation.dart';
+import '../card.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  final ServiceModel service;
+  final DateTime selectedDate;
+  final TimeOfDay selectedTime;
+  final int selectedHours;
+
+  const PaymentScreen({
+    super.key,
+    required this.service,
+    required this.selectedDate,
+    required this.selectedTime,
+    required this.selectedHours,
+  });
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -28,9 +40,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
   ];
 
   // Price calculation
-  double get subtotal => 150.0;
-  double get couponDiscount => 20.0;
-  double get deliveryFee => 10.0;
+  double get subtotal {
+    // Parse service price and multiply by selected hours
+    // Remove $ and /hr, then extract only the numerical part
+    final priceString =
+        widget.service.price.replaceAll('\$', '').replaceAll('/hr', '').trim();
+    final servicePrice = double.parse(priceString);
+    return servicePrice * widget.selectedHours;
+  }
+
+  double get couponDiscount => 0.0; // No coupon by default
+  double get deliveryFee => 15.0; // Fixed delivery fee
   double get total => subtotal - couponDiscount + deliveryFee;
 
   @override
@@ -483,6 +503,61 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
 
+            // Service Details Section
+            const Text(
+              'Service Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.service.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Duration: ${widget.selectedHours} hour${widget.selectedHours > 1 ? 's' : ''}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Date: ${_formatDate(widget.selectedDate)}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Time: ${_formatTime(widget.selectedTime)}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Price Summary Section
             const Text(
               'Price Summary',
@@ -602,11 +677,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
 
-    // Navigate to confirmation screen
+    // Navigate to service confirmation screen
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const AppointmentConfirmationScreen(),
+        builder:
+            (context) => ServiceConfirmationScreen(
+              service: widget.service,
+              selectedDate: widget.selectedDate,
+              selectedTime: widget.selectedTime,
+              selectedHours: widget.selectedHours,
+            ),
       ),
     );
   }
@@ -677,5 +758,39 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
   }
 }

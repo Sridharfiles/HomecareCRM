@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'trackingscreen.dart';
+import '../card.dart';
 
 class ServiceConfirmationScreen extends StatelessWidget {
-  const ServiceConfirmationScreen({super.key});
+  final ServiceModel service;
+  final DateTime selectedDate;
+  final TimeOfDay selectedTime;
+  final int selectedHours;
+
+  const ServiceConfirmationScreen({
+    super.key,
+    required this.service,
+    required this.selectedDate,
+    required this.selectedTime,
+    required this.selectedHours,
+  });
 
   @override
   Widget build(BuildContext context) {
+    print('ServiceConfirmationScreen build method called');
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E88E5),
+        backgroundColor: const Color(0xFF1976D2),
         elevation: 0,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -28,109 +42,138 @@ class ServiceConfirmationScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Service Details Section
-                _buildSectionTitle('Service Details'),
-                const SizedBox(height: 12),
-                _buildDetailRow('Service ID:', '#CGR123456'),
-                _buildDetailRow(
-                  'Caregiver Name:',
-                  'John Doe (Certified Nurse)',
-                ),
-                _buildDetailRow(
-                  'Appointment Date & Time:',
-                  'Tuesday, March 25, 2025 - 10:00 AM',
-                ),
-                _buildDetailRow('Service Type:', 'In-Home Elderly Care'),
-
-                const SizedBox(height: 24),
-
-                // Payment Method Highlight
-                _buildSectionTitle('Payment Method'),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Paid via Insurance (BlueCross)',
-                    style: TextStyle(
-                      color: Color(0xFFFB8C00),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+      body: Column(
+        children: [
+          // Original content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                  ),
-                ),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Service Details Section
+                          _buildSectionTitle('Service Details'),
+                          const SizedBox(height: 12),
+                          _buildDetailRow('Service ID:', '#CGR123456'),
+                          _buildDetailRow(
+                            'Caregiver Name:',
+                            'John Doe (Certified Nurse)',
+                          ),
+                          _buildDetailRow(
+                            'Appointment Date & Time:',
+                            '${_formatDate(selectedDate)} - ${_formatTime(selectedTime)}',
+                          ),
+                          _buildDetailRow('Service Type:', service.title),
+                          _buildDetailRow(
+                            'Duration:',
+                            '$selectedHours hour${selectedHours > 1 ? 's' : ''}',
+                          ),
 
-                const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                // Service Cost Breakdown
-                _buildSectionTitle('Service Cost Breakdown:'),
-                const SizedBox(height: 12),
-                _buildCostRow('Service Fee', '\$120'),
-                _buildCostRow('Additional Charges', '\$15'),
+                          // Payment Method Highlight
+                          _buildSectionTitle('Payment Method'),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Paid via Insurance (BlueCross)',
+                              style: TextStyle(
+                                color: Color(0xFFFF9800),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
 
-                Container(
-                  height: 1,
-                  color: const Color(0xFFE0E0E0),
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                          const SizedBox(height: 24),
 
-                _buildTotalRow('Total', '\$135'),
+                          // Service Cost Breakdown
+                          _buildSectionTitle('Service Cost Breakdown:'),
+                          const SizedBox(height: 12),
+                          _buildCostRow('Service Fee', service.price),
+                          _buildCostRow('Additional Charges', '\$15'),
 
-                const SizedBox(height: 32),
+                          Container(
+                            height: 1,
+                            color: const Color(0xFFE0E0E0),
+                            margin: const EdgeInsets.symmetric(vertical: 12),
+                          ),
 
-                // Track My Service Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to service tracking screen
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => const ServiceTrackingScreen(),
-                      //   ),
-                      // );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E88E5),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                          _buildTotalRow(
+                            'Total',
+                            '\$${(double.parse(service.price.replaceAll('\$', '').replaceAll('/hr', '').trim()) + 15).toStringAsFixed(0)}',
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Track My Service Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => TrackingScreen(
+                                          serviceId: '#CGR123456',
+                                          caregiverName:
+                                              'John Doe (Certified Nurse)',
+                                          serviceType: service.title,
+                                          appointmentDateTime:
+                                              '${_formatDate(selectedDate)} - ${_formatTime(selectedTime)}',
+                                          paymentMethod:
+                                              'Paid via Insurance (BlueCross)',
+                                          totalAmount:
+                                              '\$${(double.parse(service.price.replaceAll('\$', '').replaceAll('/hr', '').trim()) + 15).toStringAsFixed(0)}',
+                                        ),
+                                  ),
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFF1976D2),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Track My Service',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: const Text(
-                      'Track My Service',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -215,5 +258,39 @@ class ServiceConfirmationScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  String _formatTime(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
   }
 }
