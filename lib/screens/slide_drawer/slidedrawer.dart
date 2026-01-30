@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
+import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
+import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
+import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
+import 'package:homecarecrm/screens/slide_drawer/medication.dart';
+import 'package:homecarecrm/screens/slide_drawer/availability.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -24,11 +29,7 @@ class SlideDrawer extends StatelessWidget {
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 35,
-                    color: Colors.grey[600],
-                  ),
+                  child: Icon(Icons.person, size: 35, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -98,27 +99,64 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.calendar_today,
                   title: 'TaskSchedule',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => const TaskScheduleManagementScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.check_circle_outline,
                   title: 'ScreeningTest',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ScreeningTestScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.article,
                   title: 'Prescriptions',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => const DocumentsPrescriptionsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.medical_services,
                   title: 'Medication',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MedicationScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.access_time,
                   title: 'Availability',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AvailabilityScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.bar_chart,
@@ -194,11 +232,7 @@ class SlideDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.black87,
-        size: 26,
-      ),
+      leading: Icon(icon, color: Colors.black87, size: 26),
       title: Text(
         title,
         style: const TextStyle(
