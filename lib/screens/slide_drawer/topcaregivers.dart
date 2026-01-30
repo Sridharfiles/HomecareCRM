@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/messages_page.dart';
-import 'package:homecarecrm/screens/caregiver_details_page.dart';
+import 'package:homecarecrm/screens/slide_drawer/messages_page.dart';
+import 'package:homecarecrm/screens/slide_drawer/caregiver_details_page.dart';
 
 class Caregiver {
   final String name;

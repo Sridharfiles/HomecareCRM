@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/topcaregivers.dart';
+import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
