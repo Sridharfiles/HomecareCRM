@@ -1,12 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
-import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
-import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
-import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
-import 'package:homecarecrm/screens/slide_drawer/medication.dart';
-import 'package:homecarecrm/screens/slide_drawer/availability.dart';
 import 'package:homecarecrm/screens/slide_drawer/health_monitoring_page.dart';
-import 'package:homecarecrm/screens/slide_drawer/history_page.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -31,7 +24,11 @@ class SlideDrawer extends StatelessWidget {
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, size: 35, color: Colors.grey[600]),
+                  child: Icon(
+                    Icons.person,
+                    size: 35,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -79,14 +76,7 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.star,
                   title: 'TopCaregivers',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TopCaregiversScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.monitor_heart,
@@ -103,76 +93,32 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.history,
                   title: 'History',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HistoryPage(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.calendar_today,
                   title: 'TaskSchedule',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const TaskScheduleManagementScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.check_circle_outline,
                   title: 'ScreeningTest',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ScreeningTestScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.article,
                   title: 'Prescriptions',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const DocumentsPrescriptionsScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.medical_services,
                   title: 'Medication',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MedicationScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.access_time,
                   title: 'Availability',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AvailabilityScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.bar_chart,
@@ -248,7 +194,11 @@ class SlideDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black87, size: 26),
+      leading: Icon(
+        icon,
+        color: Colors.black87,
+        size: 26,
+      ),
       title: Text(
         title,
         style: const TextStyle(
