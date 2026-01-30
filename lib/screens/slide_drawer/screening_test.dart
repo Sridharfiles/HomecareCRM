@@ -169,7 +169,7 @@ class _ScreeningTestScreenState extends State<ScreeningTestScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  shadowColor: Colors.black.withOpacity(0.2),
+                  shadowColor: Colors.black.withValues(alpha: 0.2),
                 ),
                 child: const Text(
                   'Submit',
@@ -294,7 +294,7 @@ class _ScreeningTestScreenState extends State<ScreeningTestScreen> {
           ],
         ),
 
-        if (child != null) ...[const SizedBox(height: 16), child!],
+        if (child != null) ...[const SizedBox(height: 16), child],
       ],
     );
   }
@@ -445,7 +445,7 @@ class SOSEmergencyScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD32F2F).withOpacity(0.3),
+                      color: const Color(0xFFD32F2F).withValues(alpha: 0.3),
                       blurRadius: 30,
                       spreadRadius: 10,
                     ),
@@ -508,7 +508,7 @@ class SOSEmergencyScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    shadowColor: Colors.black.withOpacity(0.3),
+                    shadowColor: Colors.black.withValues(alpha: 0.3),
                   ),
                   child: const Text(
                     'Call Emergency Service',
