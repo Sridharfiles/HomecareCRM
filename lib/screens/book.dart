@@ -277,10 +277,6 @@ class _BookPageState extends State<BookPage> {
                           builder:
                               (context) => ConfirmBookingScreen(
                                 service: widget.service,
-                                selectedDate: DateTime.now(),
-                                selectedTime: TimeOfDay.now(),
-                                selectedHours:
-                                    1, // Default to 1 hour, can be made dynamic
                               ),
                         ),
                       );

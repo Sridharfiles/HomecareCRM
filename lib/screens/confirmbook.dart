@@ -3,17 +3,17 @@ import 'package:homecarecrm/card.dart';
 import 'package:homecarecrm/screens/payment.dart';
 
 class ConfirmBookingScreen extends StatefulWidget {
-  final ServiceModel service;
-  final DateTime selectedDate;
-  final TimeOfDay selectedTime;
-  final int selectedHours;
+  final ServiceModel? service;
+  final String? selectedDate;
+  final String? selectedTime;
+  final int? selectedHours;
 
   const ConfirmBookingScreen({
     super.key,
-    required this.service,
-    required this.selectedDate,
-    required this.selectedTime,
-    required this.selectedHours,
+    this.service,
+    this.selectedDate,
+    this.selectedTime,
+    this.selectedHours,
   });
 
   @override
@@ -363,7 +363,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                             MaterialPageRoute(
                               builder:
                                   (context) => PaymentScreen(
-                                    service: widget.service,
+                                    service: widget.service!,
                                     selectedDate: _getSelectedDate(),
                                     selectedTime: _getSelectedTime(),
                                     selectedHours: int.parse(

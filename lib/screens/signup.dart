@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:homecarecrm/screens/home.dart';
 import 'package:homecarecrm/screens/login.dart';
+import 'package:homecarecrm/service/google_signin_service.dart';
 
 class Signup extends StatefulWidget {
   const Signup({Key? key}) : super(key: key);
 
   @override
-  State<Signup> createState() => _LoginScreenState();
+  State<Signup> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<Signup>
+class _SignupScreenState extends State<Signup>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   bool _obscurePassword = true;
-  bool _rememberMe = false;
+  bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  // Text editing controllers
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  // Google Sign-In service
+  final GoogleSignInService _googleSignInService = GoogleSignInService();
 
   @override
   void initState() {
@@ -40,7 +52,232 @@ class _LoginScreenState extends State<Signup>
   @override
   void dispose() {
     _controller.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // Email/Password Sign Up
+  Future<void> _handleEmailSignUp() async {
+    // Validate inputs
+    if (_usernameController.text.trim().isEmpty) {
+      _showErrorSnackBar('Please enter a username/email');
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      _showErrorSnackBar('Please enter a password');
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showErrorSnackBar('Passwords do not match');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showErrorSnackBar('Password must be at least 6 characters');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Create user with email and password
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+        email: _usernameController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Update display name if needed
+      await userCredential.user?.updateDisplayName(_usernameController.text.trim().split('@')[0]);
+
+      if (mounted) {
+        _showSuccessSnackBar('Account created successfully!');
+        // Navigate to HomePage since user is already authenticated
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'An error occurred';
+      
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = 'This email is already registered';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Invalid email address';
+          break;
+        case 'weak-password':
+          errorMessage = 'Password is too weak';
+          break;
+        case 'network-request-failed':
+          errorMessage = 'Network error. Please check your connection';
+          break;
+        default:
+          errorMessage = e.message ?? 'An error occurred';
+      }
+      
+      _showErrorSnackBar(errorMessage);
+    } catch (e) {
+      _showErrorSnackBar('An unexpected error occurred');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Google Sign In - FIXED FOR V7 API WITH DETAILED LOGGING
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) {
+      print('🔴 Already loading, ignoring click');
+      return;
+    }
+
+    print('🔵 Setting loading state to true');
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('🔵 Starting Google Sign-In...');
+      print('🔵 Calling _googleSignInService.signInWithGoogle()...');
+      
+      final UserCredential? userCredential = await _googleSignInService.signInWithGoogle();
+      
+      print('🔵 ===== SIGN-IN METHOD RETURNED =====');
+      print('🔵 UserCredential is null: ${userCredential == null}');
+      
+      if (userCredential != null) {
+        print('🔵 UserCredential is NOT NULL!');
+        print('🔵 User is null: ${userCredential.user == null}');
+        
+        if (userCredential.user != null) {
+          print('🔵 User email: ${userCredential.user?.email}');
+          print('🔵 User displayName: ${userCredential.user?.displayName}');
+          print('🔵 User uid: ${userCredential.user?.uid}');
+        }
+      } else {
+        print('🔴 UserCredential is NULL!');
+      }
+
+      print('🔵 Checking if widget is mounted: $mounted');
+      if (!mounted) {
+        print('🔴 Widget not mounted, aborting navigation');
+        return;
+      }
+
+      if (userCredential != null && userCredential.user != null) {
+        print('🔵 ✅ SUCCESS! User is authenticated!');
+        print('🔵 Preparing to navigate to HomePage...');
+        
+        // Small delay to ensure state is updated
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        print('🔵 Checking mounted again: $mounted');
+        if (!mounted) {
+          print('🔴 Widget unmounted during delay, aborting');
+          return;
+        }
+        
+        print('🔵 Calling Navigator.pushReplacement...');
+        
+        // Navigate to HomePage
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) {
+            print('🔵 Building HomePage widget...');
+            return const HomePage();
+          }),
+        );
+        
+        print('🔵 ✅ Navigation completed successfully!');
+      } else {
+        print('🔴 Cannot navigate - UserCredential or user is null');
+        print('🔴 userCredential != null: ${userCredential != null}');
+        if (userCredential != null) {
+          print('🔴 userCredential.user != null: ${userCredential.user != null}');
+        }
+      }
+    } on Exception catch (e) {
+      print('🔴 ===== EXCEPTION CAUGHT =====');
+      print('🔴 Exception: $e');
+      print('🔴 Exception type: ${e.runtimeType}');
+      print('🔴 Exception string: ${e.toString()}');
+      
+      if (!mounted) {
+        print('🔴 Widget not mounted in exception handler');
+        return;
+      }
+      
+      // Check if it's a cancellation exception
+      String errorString = e.toString();
+      if (errorString.contains('canceled') || 
+          errorString.contains('cancelled') ||
+          errorString.contains('sign_in_canceled') ||
+          errorString.contains('activity is cancelled by the user')) {
+        print('🔵 User cancelled sign-in - no error shown');
+        // User cancelled - silently ignore
+      } else {
+        // Show error only for actual failures
+        print('🔴 Real error - showing message to user');
+        _showErrorSnackBar('Google sign-in failed. Please try again.');
+      }
+    } catch (e) {
+      print('🔴 ===== UNEXPECTED ERROR =====');
+      print('🔴 Unexpected error: $e');
+      print('🔴 Error type: ${e.runtimeType}');
+      
+      if (!mounted) return;
+      _showErrorSnackBar('Google sign-in failed. Please try again.');
+    } finally {
+      print('🔵 In finally block');
+      if (mounted) {
+        print('🔵 Setting loading state to false');
+        setState(() {
+          _isLoading = false;
+        });
+        print('🔵 Loading state updated');
+      } else {
+        print('🔴 Widget not mounted in finally block');
+      }
+    }
+  }
+
+  // Facebook Sign In (placeholder)
+  Future<void> _handleFacebookSignIn() async {
+    _showErrorSnackBar('Facebook sign-in coming soon!');
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -81,7 +318,7 @@ class _LoginScreenState extends State<Signup>
                     ),
                   ),
                 ),
-                // Animated Login Card
+                // Animated Signup Card
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: SlideTransition(
@@ -110,11 +347,13 @@ class _LoginScreenState extends State<Signup>
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              // Username field
+                              // Username/Email field
                               TextField(
+                                controller: _usernameController,
+                                keyboardType: TextInputType.emailAddress,
                                 decoration: InputDecoration(
-                                  hintText: 'Username',
-                                  prefixIcon: const Icon(Icons.person_outline),
+                                  hintText: 'Email',
+                                  prefixIcon: const Icon(Icons.email_outlined),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(color: Colors.grey),
@@ -135,6 +374,7 @@ class _LoginScreenState extends State<Signup>
                               const SizedBox(height: 16),
                               // Password field
                               TextField(
+                                controller: _passwordController,
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
                                   hintText: 'Password',
@@ -169,20 +409,22 @@ class _LoginScreenState extends State<Signup>
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              // Confirm Password field
                               TextField(
-                                obscureText: _obscurePassword,
+                                controller: _confirmPasswordController,
+                                obscureText: _obscureConfirmPassword,
                                 decoration: InputDecoration(
                                   hintText: 'Confirm Password',
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   suffixIcon: IconButton(
                                     icon: Icon(
-                                      _obscurePassword
+                                      _obscureConfirmPassword
                                           ? Icons.visibility_outlined
                                           : Icons.visibility_off_outlined,
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _obscurePassword = !_obscurePassword;
+                                        _obscureConfirmPassword = !_obscureConfirmPassword;
                                       });
                                     },
                                   ),
@@ -203,29 +445,36 @@ class _LoginScreenState extends State<Signup>
                                   fillColor: Colors.grey[50],
                                 ),
                               ),
-                              // Remember me and Forgot password
-                              
                               const SizedBox(height: 24),
                               // Sign Up Button
                               SizedBox(
                                 width: double.infinity,
                                 height: 56,
                                 child: ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: _isLoading ? null : _handleEmailSignUp,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF0D6EFD),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Sign Up',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Sign Up',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -244,7 +493,7 @@ class _LoginScreenState extends State<Signup>
                                     child: SizedBox(
                                       height: 56,
                                       child: OutlinedButton.icon(
-                                        onPressed: () {},
+                                        onPressed: _isLoading ? null : _handleFacebookSignIn,
                                         icon: Image.asset(
                                           'assets/logo/Facebook.png',
                                           height: 24,
@@ -272,7 +521,7 @@ class _LoginScreenState extends State<Signup>
                                     child: SizedBox(
                                       height: 56,
                                       child: OutlinedButton.icon(
-                                        onPressed: () {},
+                                        onPressed: _isLoading ? null : _handleGoogleSignIn,
                                         icon: Image.asset(
                                           'assets/logo/Google.png',
                                           height: 24,
@@ -298,17 +547,17 @@ class _LoginScreenState extends State<Signup>
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              // Sign up text
+                              // Login text
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text(
-                                    "Don't have an account? ",
+                                    "Already have an account? ",
                                     style: TextStyle(fontSize: 15),
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.push(
+                                      Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => Login(),

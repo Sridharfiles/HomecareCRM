@@ -175,9 +175,7 @@ class CaregiverDetailsPage extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => ConfirmBookingScreen(
                         service: serviceModel,
-                        selectedDate: DateTime.now(),
-                        selectedTime: TimeOfDay.now(),
-                        selectedHours: 1,
+                        
                       ),
                     ),
                   );
