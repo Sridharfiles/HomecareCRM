@@ -5,6 +5,7 @@ import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
 import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
 import 'package:homecarecrm/screens/slide_drawer/medication.dart';
 import 'package:homecarecrm/screens/slide_drawer/availability.dart';
+import 'package:homecarecrm/screens/slide_drawer/analytics.dart';
 import 'package:homecarecrm/screens/slide_drawer/health_monitoring_page.dart';
 import 'package:homecarecrm/screens/slide_drawer/history_page.dart';
 
@@ -177,7 +178,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.bar_chart,
                   title: 'Analytics',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AnalyticsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.favorite,
