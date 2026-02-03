@@ -11,6 +11,10 @@ import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
 import 'package:homecarecrm/screens/slide_drawer/settings.dart';
 import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
 import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
+import 'package:homecarecrm/screens/slide_drawer/bookmarked.dart';
+import 'package:homecarecrm/screens/slide_drawer/subscription.dart';
+import 'package:homecarecrm/screens/slide_drawer/earnings.dart';
+
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
 
@@ -34,11 +38,7 @@ class SlideDrawer extends StatelessWidget {
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 35,
-                    color: Colors.grey[600],
-                  ),
+                  child: Icon(Icons.person, size: 35, color: Colors.grey[600]),
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -83,9 +83,7 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.check_box,
                   title: 'Booking',
-                  onTap: () {
-                    
-                  },
+                  onTap: () {},
                 ),
                 _buildMenuItem(
                   icon: Icons.star,
@@ -96,9 +94,7 @@ class SlideDrawer extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => TopCaregiversScreen(),
                       ),
-                    );  
-                    
-                    
+                    );
                   },
                 ),
                 _buildMenuItem(
@@ -132,7 +128,8 @@ class SlideDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const TaskScheduleManagementScreen(),
+                        builder:
+                            (context) => const TaskScheduleManagementScreen(),
                       ),
                     );
                   },
@@ -156,7 +153,8 @@ class SlideDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DocumentsPrescriptionsScreen(),
+                        builder:
+                            (context) => const DocumentsPrescriptionsScreen(),
                       ),
                     );
                   },
@@ -171,7 +169,6 @@ class SlideDrawer extends StatelessWidget {
                         builder: (context) => const MedicationScreen(),
                       ),
                     );
-
                   },
                 ),
                 _buildMenuItem(
@@ -218,7 +215,12 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.bookmark,
                   title: 'Bookmark',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BookmarkedPage()),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.calendar_month,
@@ -228,12 +230,26 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.monetization_on,
                   title: 'Earnings',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EarningsPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.subscriptions,
                   title: 'Subscriptions',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SubscriptionPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.wallet,
@@ -246,9 +262,7 @@ class SlideDrawer extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => MessagesPage(),
-                      ),
+                      MaterialPageRoute(builder: (context) => MessagesPage()),
                     );
                   },
                 ),
@@ -288,11 +302,7 @@ class SlideDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: Colors.black87,
-        size: 26,
-      ),
+      leading: Icon(icon, color: Colors.black87, size: 26),
       title: Text(
         title,
         style: const TextStyle(
