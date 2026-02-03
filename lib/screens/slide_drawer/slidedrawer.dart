@@ -296,6 +296,20 @@ class SlideDrawer extends StatelessWidget {
                     );
                   },
                 ),
+                SizedBox(height: 8),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: 20,
+                  endIndent: 20,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 8),
+                _buildMenuItem(
+                  icon: Icons.logout,
+                  title: 'Log Out',
+                  onTap: () {},
+                ),
               ],
             ),
           ),
