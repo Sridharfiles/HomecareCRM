@@ -14,6 +14,7 @@ import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
 import 'package:homecarecrm/screens/slide_drawer/bookmarked.dart';
 import 'package:homecarecrm/screens/slide_drawer/subscription.dart';
 import 'package:homecarecrm/screens/slide_drawer/earnings.dart';
+import 'package:homecarecrm/screens/slide_drawer/my_bookings.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -225,7 +226,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.calendar_month,
                   title: 'MyBookings',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyBookingsPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.monetization_on,
