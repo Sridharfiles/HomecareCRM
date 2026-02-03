@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/card.dart';
 import 'package:homecarecrm/data.dart';
+import 'package:homecarecrm/screens/notify.dart';
 import 'package:homecarecrm/screens/slide_drawer/slidedrawer.dart';
 
 class HomePage extends StatelessWidget {
@@ -54,16 +55,26 @@ class HomePage extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.notifications,
-                      color: Color(0xFF0D6EFD),
-                      size: 22,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        color: Color(0xFF0D6EFD),
+                        size: 22,
+                      ),
                     ),
                   ),
                 ],

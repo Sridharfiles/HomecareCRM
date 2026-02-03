@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
-import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
-import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
-import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
-import 'package:homecarecrm/screens/slide_drawer/medication.dart';
-import 'package:homecarecrm/screens/slide_drawer/availability.dart';
 import 'package:homecarecrm/screens/slide_drawer/analytics.dart';
+import 'package:homecarecrm/screens/slide_drawer/availability.dart';
+import 'package:homecarecrm/screens/slide_drawer/favorite.dart';
 import 'package:homecarecrm/screens/slide_drawer/health_monitoring_page.dart';
 import 'package:homecarecrm/screens/slide_drawer/history_page.dart';
-
+import 'package:homecarecrm/screens/slide_drawer/medication.dart';
+import 'package:homecarecrm/screens/slide_drawer/messages_page.dart';
+import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
+import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
+import 'package:homecarecrm/screens/slide_drawer/settings.dart';
+import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
+import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
 
@@ -32,7 +34,11 @@ class SlideDrawer extends StatelessWidget {
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.person, size: 35, color: Colors.grey[600]),
+                  child: Icon(
+                    Icons.person,
+                    size: 35,
+                    color: Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -70,12 +76,16 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.home,
                   title: 'Homepage',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.check_box,
                   title: 'Booking',
-                  onTap: () {},
+                  onTap: () {
+                    
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.star,
@@ -86,7 +96,9 @@ class SlideDrawer extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => TopCaregiversScreen(),
                       ),
-                    );
+                    );  
+                    
+                    
                   },
                 ),
                 _buildMenuItem(
@@ -120,8 +132,7 @@ class SlideDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) => const TaskScheduleManagementScreen(),
+                        builder: (context) => const TaskScheduleManagementScreen(),
                       ),
                     );
                   },
@@ -145,8 +156,7 @@ class SlideDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder:
-                            (context) => const DocumentsPrescriptionsScreen(),
+                        builder: (context) => const DocumentsPrescriptionsScreen(),
                       ),
                     );
                   },
@@ -161,6 +171,7 @@ class SlideDrawer extends StatelessWidget {
                         builder: (context) => const MedicationScreen(),
                       ),
                     );
+
                   },
                 ),
                 _buildMenuItem(
@@ -190,7 +201,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.favorite,
                   title: 'Favorite',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FavoriteCaregiverScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.search,
@@ -225,7 +243,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.message,
                   title: 'Messages',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MessagesPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.person,
@@ -240,7 +265,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.settings,
                   title: 'Settings',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -256,7 +288,11 @@ class SlideDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black87, size: 26),
+      leading: Icon(
+        icon,
+        color: Colors.black87,
+        size: 26,
+      ),
       title: Text(
         title,
         style: const TextStyle(
