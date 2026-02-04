@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'serviceconfirmation.dart';
-import 'home_page/service_card.dart';
+import 'serviceconfirmation_page.dart';
+import '../home_page/service_card.dart';
 
 class PaymentScreen extends StatefulWidget {
   final ServiceModel service;

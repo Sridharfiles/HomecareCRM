@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'Menu/mybookings_page/tracking_page.dart';
-import 'home_page/service_card.dart';
+import '../Menu/mybookings_page/tracking_page.dart';
+import '../home_page/service_card.dart';
 
 class ServiceConfirmationScreen extends StatelessWidget {
   final ServiceModel service;

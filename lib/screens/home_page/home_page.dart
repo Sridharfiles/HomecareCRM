@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/home_page/service_card.dart';
-import 'package:homecarecrm/data.dart';
+import 'package:homecarecrm/static_data/caregivers_data.dart';
 import 'package:homecarecrm/screens/Menu/settings_page/notification_page.dart';
 import 'package:homecarecrm/screens/Menu/main_menu.dart';
 

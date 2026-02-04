@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/home_page/service_card.dart';
-import 'package:homecarecrm/screens/payment.dart';
+import 'package:homecarecrm/screens/caregiver_details_page/payment_page.dart';
 
 class ConfirmBookingScreen extends StatefulWidget {
   final ServiceModel service;

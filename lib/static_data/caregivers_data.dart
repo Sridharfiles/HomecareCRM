@@ -1,5 +1,5 @@
 // data.dart
-import 'screens/home_page/service_card.dart';
+import '../screens/home_page/service_card.dart';
 
 // Static service data
 final List<ServiceModel> serviceData = [
