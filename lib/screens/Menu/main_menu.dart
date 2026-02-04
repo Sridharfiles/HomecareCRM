@@ -17,6 +17,7 @@ import 'package:homecarecrm/screens/Menu/subscriptions_page/subscription_page.da
 import 'package:homecarecrm/screens/Menu/earnings_page/earnings_page.dart';
 import 'package:homecarecrm/screens/Menu/mybookings_page/my_bookings_page.dart';
 import 'package:homecarecrm/screens/Menu/search_page/search_screen.dart';
+import 'package:homecarecrm/screens/Menu/wallet_page/wallet_page.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -271,7 +272,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.wallet,
                   title: 'Wallet',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WalletPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.message,
