@@ -7,6 +7,7 @@ import 'package:homecarecrm/screens/Menu/history_page/history_page.dart';
 import 'package:homecarecrm/screens/Menu/medication_page/medication_page.dart';
 import 'package:homecarecrm/screens/Menu/messages_page/messages_page.dart';
 import 'package:homecarecrm/screens/Menu/prescriptions_page/prescriptions_page.dart';
+import 'package:homecarecrm/screens/Menu/profile_page/profile_page.dart';
 import 'package:homecarecrm/screens/Menu/reviews_page/review_page.dart';
 import 'package:homecarecrm/screens/Menu/screentesting_page/screening_test_page.dart';
 import 'package:homecarecrm/screens/Menu/settings_page/settings_page.dart';
@@ -286,7 +287,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.person,
                   title: 'Profile',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfilePage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.reviews,
