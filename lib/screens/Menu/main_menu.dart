@@ -16,6 +16,7 @@ import 'package:homecarecrm/screens/Menu/bookmark_page/bookmarked_page.dart';
 import 'package:homecarecrm/screens/Menu/subscriptions_page/subscription_page.dart';
 import 'package:homecarecrm/screens/Menu/earnings_page/earnings_page.dart';
 import 'package:homecarecrm/screens/Menu/mybookings_page/my_bookings_page.dart';
+import 'package:homecarecrm/screens/Menu/search_page/search_screen.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -212,7 +213,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.search,
                   title: 'Search',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.bookmark,
@@ -289,7 +297,7 @@ class SlideDrawer extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => const ReviewScreen(),
                       ),
-                    );  
+                    );
                   },
                 ),
                 _buildMenuItem(
