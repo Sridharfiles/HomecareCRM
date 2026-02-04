@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/home.dart';
-import 'package:homecarecrm/screens/signup.dart';
+import 'package:homecarecrm/screens/home_page/home_page.dart';
+import 'package:homecarecrm/screens/signup_page/signup_page.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);

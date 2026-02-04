@@ -1,7 +1,7 @@
 // book.dart
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/card.dart';
-import 'package:homecarecrm/screens/confirmbook.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
+import 'package:homecarecrm/screens/service_details_page/confirmbook_page.dart';
 
 class BookPage extends StatefulWidget {
   final ServiceModel service;

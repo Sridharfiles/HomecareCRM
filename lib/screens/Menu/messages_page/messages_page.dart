@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/chat_detail_page.dart';
+import 'package:homecarecrm/screens/Menu/messages_page/chat_detail_page.dart';
 
 class Message {
   final String name;

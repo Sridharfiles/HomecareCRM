@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/notify.dart';
-import 'package:homecarecrm/screens/slide_drawer/faqs.dart';
-import 'package:homecarecrm/screens/slide_drawer/privacy.dart';
-import 'package:homecarecrm/screens/slide_drawer/tos.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/notification_page.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/frequently_asked_questions_page.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/privacy_policy_page.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/terms_of_service_page.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);

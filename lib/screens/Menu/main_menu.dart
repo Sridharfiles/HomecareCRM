@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/analytics.dart';
-import 'package:homecarecrm/screens/slide_drawer/availability.dart';
-import 'package:homecarecrm/screens/slide_drawer/favorite.dart';
-import 'package:homecarecrm/screens/slide_drawer/health_monitoring_page.dart';
-import 'package:homecarecrm/screens/slide_drawer/history_page.dart';
-import 'package:homecarecrm/screens/slide_drawer/medication.dart';
-import 'package:homecarecrm/screens/slide_drawer/messages_page.dart';
-import 'package:homecarecrm/screens/slide_drawer/prescriptions.dart';
-import 'package:homecarecrm/screens/slide_drawer/screening_test.dart';
-import 'package:homecarecrm/screens/slide_drawer/settings.dart';
-import 'package:homecarecrm/screens/slide_drawer/task_schedule.dart';
-import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
-import 'package:homecarecrm/screens/slide_drawer/bookmarked.dart';
-import 'package:homecarecrm/screens/slide_drawer/subscription.dart';
-import 'package:homecarecrm/screens/slide_drawer/earnings.dart';
-import 'package:homecarecrm/screens/slide_drawer/my_bookings.dart';
+import 'package:homecarecrm/screens/Menu/analytics_page/analytics_page.dart';
+import 'package:homecarecrm/screens/Menu/availability_page/availability_page.dart';
+import 'package:homecarecrm/screens/Menu/favorite_page/favorite_page.dart';
+import 'package:homecarecrm/screens/Menu/healthmonitoring_page/health_monitoring_page.dart';
+import 'package:homecarecrm/screens/Menu/history_page/history_page.dart';
+import 'package:homecarecrm/screens/Menu/medication_page/medication_page.dart';
+import 'package:homecarecrm/screens/Menu/messages_page/messages_page.dart';
+import 'package:homecarecrm/screens/Menu/prescriptions_page/prescriptions_page.dart';
+import 'package:homecarecrm/screens/Menu/reviews_page/review_page.dart';
+import 'package:homecarecrm/screens/Menu/screentesting_page/screening_test_page.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/settings_page.dart';
+import 'package:homecarecrm/screens/Menu/taskschedule_page/task_schedule_page.dart';
+import 'package:homecarecrm/screens/Menu/topcaregivers_page/topcaregivers.dart';
+import 'package:homecarecrm/screens/Menu/bookmark_page/bookmarked_page.dart';
+import 'package:homecarecrm/screens/Menu/subscriptions_page/subscription_page.dart';
+import 'package:homecarecrm/screens/Menu/earnings_page/earnings_page.dart';
+import 'package:homecarecrm/screens/Menu/mybookings_page/my_bookings_page.dart';
 
 class SlideDrawer extends StatelessWidget {
   const SlideDrawer({Key? key}) : super(key: key);
@@ -282,7 +283,14 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.reviews,
                   title: 'Reviwes',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ReviewScreen(),
+                      ),
+                    );  
+                  },
                 ),
                 _buildMenuItem(
                   icon: Icons.settings,

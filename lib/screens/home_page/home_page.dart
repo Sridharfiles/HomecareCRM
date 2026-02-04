@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/card.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
 import 'package:homecarecrm/data.dart';
-import 'package:homecarecrm/screens/notify.dart';
-import 'package:homecarecrm/screens/slide_drawer/slidedrawer.dart';
+import 'package:homecarecrm/screens/Menu/settings_page/notification_page.dart';
+import 'package:homecarecrm/screens/Menu/main_menu.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);

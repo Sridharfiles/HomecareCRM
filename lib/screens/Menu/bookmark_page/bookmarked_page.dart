@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/card.dart';
-import 'package:homecarecrm/screens/book.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
+import 'package:homecarecrm/screens/service_details_page/service_details_page.dart';
 
 class BookmarkedPage extends StatefulWidget {
   const BookmarkedPage({Key? key}) : super(key: key);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/card.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
 import 'package:homecarecrm/screens/payment.dart';
 
 class ConfirmBookingScreen extends StatefulWidget {

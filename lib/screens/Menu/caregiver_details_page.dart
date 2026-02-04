@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/topcaregivers.dart';
-import 'package:homecarecrm/screens/confirmbook.dart';
-import 'package:homecarecrm/card.dart';
+import 'package:homecarecrm/screens/Menu/topcaregivers_page/topcaregivers.dart';
+import 'package:homecarecrm/screens/service_details_page/confirmbook_page.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
 
 class CaregiverDetailsPage extends StatelessWidget {
   final Caregiver caregiver;

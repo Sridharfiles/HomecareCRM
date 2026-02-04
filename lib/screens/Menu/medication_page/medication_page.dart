@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/slide_drawer/add_medication.dart';
-import 'package:homecarecrm/screens/slide_drawer/messages_page.dart';
+import 'package:homecarecrm/screens/Menu/medication_page/add_medication_page.dart';
+import 'package:homecarecrm/screens/Menu/messages_page/messages_page.dart';
 
 class MedicationScreen extends StatefulWidget {
   const MedicationScreen({super.key});

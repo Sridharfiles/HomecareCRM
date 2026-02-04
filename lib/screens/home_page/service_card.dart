@@ -1,6 +1,6 @@
 // card.dart
 import 'package:flutter/material.dart';
-import 'package:homecarecrm/screens/book.dart';
+import 'package:homecarecrm/screens/service_details_page/service_details_page.dart';
 
 class ServiceCard extends StatefulWidget {
   final ServiceModel service;
