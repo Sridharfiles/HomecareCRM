@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:homecarecrm/services/user_details_store_services.dart';
+import 'package:homecarecrm/static_data/countries_data.dart';
+import 'package:homecarecrm/static_data/states_districts_data.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({Key? key}) : super(key: key);
@@ -12,16 +16,142 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _streetController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
-  final TextEditingController _zipCodeController = TextEditingController();
-  final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _districtController = TextEditingController();
+  final TextEditingController _pincodeController = TextEditingController();
+
+  final UserDetailsStoreService _userService = UserDetailsStoreService();
+
+  String? _selectedCountry;
+  String? _selectedCountryCode;
+  String? _selectedState;
+  String? _selectedDistrict;
+  List<String> _availableStates = [];
+  List<String> _availableDistricts = [];
+  String? _userName;
+  String? _userEmail;
+  String? _userProfilePicture;
+  bool _isLoading = true;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _emailController.text = 'john.doe@example.com';
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Get Google profile data first
+      Map<String, dynamic>? googleProfile = 
+          await _userService.getGoogleProfileData();
+      
+      if (googleProfile != null) {
+        _userProfilePicture = googleProfile['profilePicture'];
+      }
+
+      // Get current user email from Firebase Auth
+      String? email = await _userService.getCurrentUserEmail();
+      if (email != null) {
+        _emailController.text = email;
+        _userEmail = email;
+      }
+
+      // Fetch user details from Firestore
+      Map<String, dynamic>? userData = await _userService.fetchUserDetails();
+      
+      if (userData != null) {
+        setState(() {
+          _firstNameController.text = userData['firstName'] ?? '';
+          _lastNameController.text = userData['lastName'] ?? '';
+          _phoneController.text = userData['phoneNumber'] ?? '';
+          _stateController.text = userData['state'] ?? '';
+          _districtController.text = userData['district'] ?? '';
+          _pincodeController.text = userData['pincode'] ?? '';
+          _selectedCountry = userData['country'];
+          _selectedCountryCode = userData['countryCode'];
+          _selectedState = userData['state'];
+          _selectedDistrict = userData['district'];
+          
+          // Populate available states for selected country
+          if (_selectedCountry != null) {
+            _availableStates = getStatesForCountry(_selectedCountry!);
+            if (_selectedState != null) {
+              _availableDistricts = getDistrictsForState(_selectedCountry!, _selectedState!);
+            }
+          }
+          
+          // Set display name
+          String firstName = userData['firstName'] ?? '';
+          String lastName = userData['lastName'] ?? '';
+          _userName = '$firstName $lastName'.trim();
+        });
+      } else {
+        // Use Google profile data if no Firestore data exists
+        if (googleProfile != null) {
+          setState(() {
+            _firstNameController.text = googleProfile['firstName'] ?? '';
+            _lastNameController.text = googleProfile['lastName'] ?? '';
+            String firstName = googleProfile['firstName'] ?? '';
+            String lastName = googleProfile['lastName'] ?? '';
+            _userName = '$firstName $lastName'.trim();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading user data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _onCountrySelected(String? countryName) {
+    if (countryName != null) {
+      final country = countryList.firstWhere(
+        (c) => c.name == countryName,
+        orElse: () => countryList[0],
+      );
+      setState(() {
+        _selectedCountry = country.name;
+        _selectedCountryCode = country.dialCode;
+        _selectedState = null;
+        _selectedDistrict = null;
+        _stateController.clear();
+        _districtController.clear();
+        _availableStates = getStatesForCountry(country.name);
+        _availableDistricts = [];
+      });
+    }
+  }
+
+  void _onStateSelected(String? stateName) {
+    if (stateName != null && _selectedCountry != null) {
+      setState(() {
+        _selectedState = stateName;
+        _selectedDistrict = null;
+        _districtController.clear();
+        _availableDistricts = getDistrictsForState(_selectedCountry!, stateName);
+      });
+    }
+  }
+
+  void _onDistrictSelected(String? districtName) {
+    if (districtName != null) {
+      setState(() {
+        _selectedDistrict = districtName;
+        _districtController.text = districtName;
+      });
+    }
   }
 
   @override
@@ -30,11 +160,9 @@ class _EditProfileState extends State<EditProfile> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _streetController.dispose();
-    _cityController.dispose();
     _stateController.dispose();
-    _zipCodeController.dispose();
-    _countryController.dispose();
+    _districtController.dispose();
+    _pincodeController.dispose();
     super.dispose();
   }
 
@@ -84,104 +212,314 @@ class _EditProfileState extends State<EditProfile> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Profile Picture
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                  border: Border.all(color: Colors.grey[400]!, width: 1),
-                ),
-                child: Icon(Icons.person, size: 40, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 12),
-
-              // Name
-              const Text(
-                'John Doe',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              const SizedBox(height: 4),
-
-              // Email
-              Text(
-                'john.doe@example.com',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Input Fields
-              _buildInputField(_firstNameController, Icons.person_outline, 'First Name'),
-              const SizedBox(height: 12),
-              _buildInputField(_lastNameController, Icons.person_outline, 'Last Name'),
-              const SizedBox(height: 12),
-              _buildInputField(_emailController, Icons.email_outlined, 'Email Address', TextInputType.emailAddress),
-              const SizedBox(height: 12),
-              _buildInputField(_phoneController, Icons.phone_outlined, 'Phone Number', TextInputType.phone),
-              const SizedBox(height: 12),
-              _buildInputField(_streetController, Icons.home_outlined, 'Street Address'),
-              const SizedBox(height: 12),
-              _buildInputField(_cityController, Icons.location_city_outlined, 'City'),
-              const SizedBox(height: 12),
-              _buildInputField(_stateController, Icons.location_on_outlined, 'State'),
-              const SizedBox(height: 12),
-              _buildInputField(_zipCodeController, Icons.markunread_mailbox_outlined, 'Zip Code', TextInputType.number),
-              const SizedBox(height: 12),
-              _buildInputField(_countryController, Icons.flag_outlined, 'Country'),
-              const SizedBox(height: 24),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Information saved successfully!'),
-                        backgroundColor: Colors.blue,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // Profile Picture
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.grey[300],
+                        border: Border.all(color: Colors.grey[400]!, width: 1),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      child: _userProfilePicture != null
+                          ? ClipOval(
+                              child: Image.network(
+                                _userProfilePicture!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.person, size: 40, color: Colors.grey[600]);
+                                },
+                              ),
+                            )
+                          : Icon(Icons.person, size: 40, color: Colors.grey[600]),
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Save Information',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                    const SizedBox(height: 12),
+
+                    // Name
+                    Text(
+                      _userName ?? 'User Name',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+
+                    // Email
+                    Text(
+                      _userEmail ?? 'email@example.com',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Input Fields
+                    _buildInputField(_firstNameController, Icons.person_outline, 'First Name'),
+                    const SizedBox(height: 12),
+                    _buildInputField(_lastNameController, Icons.person_outline, 'Last Name'),
+                    const SizedBox(height: 12),
+                    _buildInputField(
+                      _emailController,
+                      Icons.email_outlined,
+                      'Email Address',
+                      keyboardType: TextInputType.emailAddress,
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Country Dropdown
+                    _buildCountryDropdown(),
+                    const SizedBox(height: 12),
+
+                    // Phone Number with Country Code Prefix
+                    Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        children: [
+                          // Country Code Prefix
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              _selectedCountryCode ?? '+0',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 30,
+                            width: 1,
+                            color: Colors.grey[300],
+                          ),
+                          // Phone Number Input
+                          Expanded(
+                            child: TextField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              style: const TextStyle(fontSize: 14),
+                              decoration: InputDecoration(
+                                hintText: 'Enter phone number',
+                                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                                prefixIcon: Icon(Icons.phone_outlined, color: Colors.grey[600], size: 20),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // State Dropdown
+                    _buildStateDropdown(),
+                    const SizedBox(height: 12),
+
+                    // District Dropdown
+                    _buildDistrictDropdown(),
+                    const SizedBox(height: 12),
+                    
+                    _buildInputField(
+                      _pincodeController,
+                      Icons.markunread_mailbox_outlined,
+                      'Pincode',
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _saveUserInformation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          disabledBackgroundColor: Colors.grey,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Save Information',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+    );
+  }
+
+  Widget _buildCountryDropdown() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: DropdownButton<String>(
+        value: _selectedCountry,
+        isExpanded: true,
+        underline: const SizedBox(),
+        hint: Row(
+          children: [
+            Icon(Icons.flag_outlined, color: Colors.grey[600], size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Select Country',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            ),
+          ],
+        ),
+        items: countryList.map<DropdownMenuItem<String>>((CountryData country) {
+          return DropdownMenuItem<String>(
+            value: country.name,
+            child: Text(country.name, style: const TextStyle(fontSize: 14)),
+          );
+        }).toList(),
+        onChanged: _onCountrySelected,
+        style: const TextStyle(fontSize: 14, color: Colors.black),
+        icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+      ),
+    );
+  }
+
+  Widget _buildStateDropdown() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: DropdownButton<String>(
+        value: _selectedState,
+        isExpanded: true,
+        underline: const SizedBox(),
+        hint: Row(
+          children: [
+            Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Select State',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            ),
+          ],
+        ),
+        items: _availableStates.map<DropdownMenuItem<String>>((String state) {
+          return DropdownMenuItem<String>(
+            value: state,
+            child: Text(state, style: const TextStyle(fontSize: 14)),
+          );
+        }).toList(),
+        onChanged: _selectedCountry != null ? _onStateSelected : null,
+        style: const TextStyle(fontSize: 14, color: Colors.black),
+        icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+        disabledHint: Row(
+          children: [
+            Icon(Icons.location_on_outlined, color: Colors.grey[400], size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Select country first',
+              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildInputField(TextEditingController controller, IconData icon, String hint, [TextInputType keyboardType = TextInputType.text]) {
+  Widget _buildDistrictDropdown() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: DropdownButton<String>(
+        value: _selectedDistrict,
+        isExpanded: true,
+        underline: const SizedBox(),
+        hint: Row(
+          children: [
+            Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Select District',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            ),
+          ],
+        ),
+        items: _availableDistricts.map<DropdownMenuItem<String>>((String district) {
+          return DropdownMenuItem<String>(
+            value: district,
+            child: Text(district, style: const TextStyle(fontSize: 14)),
+          );
+        }).toList(),
+        onChanged: _selectedState != null ? _onDistrictSelected : null,
+        style: const TextStyle(fontSize: 14, color: Colors.black),
+        icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+        disabledHint: Row(
+          children: [
+            Icon(Icons.location_on_outlined, color: Colors.grey[400], size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Select state first',
+              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+    TextEditingController controller,
+    IconData icon,
+    String hint, {
+    TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+  }) {
     return Container(
       height: 50,
       decoration: BoxDecoration(
@@ -192,6 +530,7 @@ class _EditProfileState extends State<EditProfile> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        readOnly: readOnly,
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
@@ -202,5 +541,94 @@ class _EditProfileState extends State<EditProfile> {
         ),
       ),
     );
+  }
+
+  Future<void> _saveUserInformation() async {
+    if (_selectedCountry == null || _selectedCountryCode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a country'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedState == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a state'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedDistrict == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a district'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('First name and last name are required'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await _userService.storeUserDetails(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        streetAddress: '',
+        city: '',
+        state: _selectedState!,
+        zipCode: _pincodeController.text.trim(),
+        country: _selectedCountry!,
+        countryCode: _selectedCountryCode!,
+        district: _selectedDistrict!,
+      );
+
+      if (mounted) {
+        setState(() {
+          String firstName = _firstNameController.text.trim();
+          String lastName = _lastNameController.text.trim();
+          _userName = '$firstName $lastName';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Information saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error saving user information: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 }

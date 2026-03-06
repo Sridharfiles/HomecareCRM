@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/login_page/login_page.dart';
-import 'package:homecarecrm/screens/home_page/home_page.dart';
 import 'package:homecarecrm/services/google-signin.dart';
 
 class Signup extends StatefulWidget {
@@ -385,11 +384,10 @@ class _LoginScreenState extends State<Signup>
           ),
         );
 
-        // Navigate directly to Homepage for signup with Google
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(),
+            builder: (context) => const Login(),
           ),
         );
       }
