@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/login_page/login_page.dart';
+import 'package:homecarecrm/screens/home_page/home_page.dart';
+import 'package:homecarecrm/services/google-signin.dart';
 
 class Signup extends StatefulWidget {
   const Signup({Key? key}) : super(key: key);
@@ -14,6 +16,9 @@ class _LoginScreenState extends State<Signup>
   late Animation<Offset> _slideAnimation;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  bool _isLoading = false;
+  
+  final GoogleSignInService _googleSignInService = GoogleSignInService();
 
   @override
   void initState() {
@@ -272,12 +277,22 @@ class _LoginScreenState extends State<Signup>
                                     child: SizedBox(
                                       height: 56,
                                       child: OutlinedButton.icon(
-                                        onPressed: () {},
-                                        icon: Image.asset(
-                                          'assets/logo/Google.png',
-                                          height: 24,
-                                          width: 24,
-                                        ),
+                                        onPressed: _isLoading ? null : _handleGoogleSignIn,
+                                        icon: _isLoading
+                                            ? SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                                child: CircularProgressIndicator(
+                                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                                    Colors.blue[600]!,
+                                                  ),
+                                                ),
+                                              )
+                                            : Image.asset(
+                                                'assets/logo/Google.png',
+                                                height: 24,
+                                                width: 24,
+                                              ),
                                         label: const Text(
                                           'Google',
                                           style: TextStyle(
@@ -346,5 +361,53 @@ class _LoginScreenState extends State<Signup>
         ),
       ),
     );
+  }
+
+  /// Handle Google Sign-In
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userCredential = await _googleSignInService.signInWithGoogle();
+
+      if (userCredential != null && mounted) {
+        // Successfully signed in
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Welcome, ${userCredential.user?.displayName ?? 'User'}!',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate directly to Homepage for signup with Google
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign-in failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

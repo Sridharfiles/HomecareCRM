@@ -19,9 +19,24 @@ import 'package:homecarecrm/screens/Menu/earnings_page/earnings_page.dart';
 import 'package:homecarecrm/screens/Menu/mybookings_page/my_bookings_page.dart';
 import 'package:homecarecrm/screens/Menu/search_page/search_screen.dart';
 import 'package:homecarecrm/screens/Menu/wallet_page/wallet_page.dart';
+import 'package:homecarecrm/services/google-signin.dart';
+import 'package:homecarecrm/screens/login_page/login_page.dart';
 
-class SlideDrawer extends StatelessWidget {
+class SlideDrawer extends StatefulWidget {
   const SlideDrawer({Key? key}) : super(key: key);
+
+  @override
+  State<SlideDrawer> createState() => _SlideDrawerState();
+}
+
+class _SlideDrawerState extends State<SlideDrawer> {
+  late GoogleSignInService _googleSignInService;
+
+  @override
+  void initState() {
+    super.initState();
+    _googleSignInService = GoogleSignInService();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,39 +50,53 @@ class SlideDrawer extends StatelessWidget {
             color: Colors.white,
             child: Row(
               children: [
-                // Profile Avatar with default icon
+                // Profile Avatar with user photo or default icon
                 Container(
                   width: 45,
                   height: 45,
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
+                    image: _googleSignInService.getUserPhotoUrl() != null
+                        ? DecorationImage(
+                            image: NetworkImage(
+                              _googleSignInService.getUserPhotoUrl()!,
+                            ),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Icon(Icons.person, size: 35, color: Colors.grey[600]),
+                  child: _googleSignInService.getUserPhotoUrl() == null
+                      ? Icon(Icons.person, size: 35, color: Colors.grey[600])
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 // User Info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Hey!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w400,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Hey!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'James Powell',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w400,
+                      const SizedBox(height: 2),
+                      Text(
+                        _googleSignInService.getUserDisplayName() ?? 'User',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -340,7 +369,39 @@ class SlideDrawer extends StatelessWidget {
                 _buildMenuItem(
                   icon: Icons.logout,
                   title: 'Log Out',
-                  onTap: () {},
+                  onTap: () async {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Log Out'),
+                          content: const Text('Are you sure you want to log out?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                await _googleSignInService.signOut();
+                                if (mounted) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const Login(),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Log Out'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
               ],
             ),

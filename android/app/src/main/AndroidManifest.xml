@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Internet permission for loading images -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permission to access accounts for Google Sign-In -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     
     <application
         android:label="Homecare CRM"
