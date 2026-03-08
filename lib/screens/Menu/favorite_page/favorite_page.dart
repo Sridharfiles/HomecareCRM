@@ -1,18 +1,9 @@
 import 'package:flutter/material.dart';
-
-class Caregiver {
-  final String name;
-  final String price;
-  final String image;
-  final String category;
-
-  Caregiver({
-    required this.name,
-    required this.price,
-    required this.image,
-    required this.category,
-  });
-}
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:homecarecrm/services/favorites_service.dart';
+import 'package:homecarecrm/screens/caregiver_details_page/caregiver_details_page.dart';
+import 'package:homecarecrm/screens/home_page/service_card.dart';
 
 class FavoriteCaregiverScreen extends StatefulWidget {
   const FavoriteCaregiverScreen({super.key});
@@ -22,409 +13,322 @@ class FavoriteCaregiverScreen extends StatefulWidget {
       _FavoriteCaregiverScreenState();
 }
 
-class _FavoriteCaregiverScreenState extends State<FavoriteCaregiverScreen>
-    with SingleTickerProviderStateMixin {
-  bool showFilter = false;
-  String? selectedFilter;
-  late AnimationController _animationController;
-  late Animation<Offset> _slideAnimation;
+class _FavoriteCaregiverScreenState extends State<FavoriteCaregiverScreen> {
+  final FavoritesService _favoritesService = FavoritesService();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
-  final List<String> filterOptions = [
-    'Companion Care',
-    'Agency Caregiver',
-    'Family Caregiver',
-    'Geriatric Caregiver',
-    'Hospice Care',
-    'Pediatric Caregiver',
-    'Informal Caregiver',
-    'Volunteer Caregiver',
-  ];
-
-  final List<Caregiver> allCaregivers = [
-    Caregiver(
-      name: 'Companion Care',
-      price: '\$20/hr',
-      image: 'assets/companion_care.jpg',
-      category: 'Companion Care',
-    ),
-    Caregiver(
-      name: 'Agency Caregiver',
-      price: '\$25/hr',
-      image: 'assets/agency_caregiver.jpg',
-      category: 'Agency Caregiver',
-    ),
-    Caregiver(
-      name: 'Family Caregiver',
-      price: '\$18.50/hr',
-      image: 'assets/family_caregiver.jpg',
-      category: 'Family Caregiver',
-    ),
-    Caregiver(
-      name: 'Geriatric Caregiver',
-      price: '\$22/hr',
-      image: 'assets/geriatric_caregiver.jpg',
-      category: 'Geriatric Caregiver',
-    ),
-    Caregiver(
-      name: 'Hospice Care',
-      price: '\$20/hr',
-      image: 'assets/hospice_care.jpg',
-      category: 'Hospice Care',
-    ),
-    Caregiver(
-      name: 'Pediatric Caregiver',
-      price: '\$28/hr',
-      image: 'assets/pediatric_caregiver.jpg',
-      category: 'Pediatric Caregiver',
-    ),
-    Caregiver(
-      name: 'Informal Caregiver',
-      price: '\$15/hr',
-      image: 'assets/informal_caregiver.jpg',
-      category: 'Informal Caregiver',
-    ),
-    Caregiver(
-      name: 'Volunteer Caregiver',
-      price: 'Free',
-      image: 'assets/volunteer_caregiver.jpg',
-      category: 'Volunteer Caregiver',
-    ),
-  ];
-
-  List<Caregiver> get filteredCaregivers {
-    if (selectedFilter == null) {
-      return allCaregivers;
-    }
-    return allCaregivers
-        .where((caregiver) => caregiver.category == selectedFilter)
-        .toList();
-  }
+  List<Map<String, dynamic>> _favoriteCaregivers = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
+    _loadFavorites();
+  }
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload favorites when returning to this page
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      User? currentUser = _firebaseAuth.currentUser;
+      if (currentUser == null) {
+        setState(() {
+          _errorMessage = "Please sign in to view favorites";
+          _isLoading = false;
+        });
+        return;
+      }
+
+      print('DEBUG: Loading favorites for user: ${currentUser.uid}');
+
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // Test direct Firebase query
+      print('DEBUG: Testing direct Firebase query...');
+      final directQuery =
+          await FirebaseFirestore.instance
+              .collection('favorites')
+              .where('userId', isEqualTo: currentUser.uid)
+              .get();
+
+      print('DEBUG: Direct query found ${directQuery.docs.length} documents');
+      for (var doc in directQuery.docs) {
+        print('DEBUG: Direct doc data: ${doc.data()}');
+      }
+
+      List<Map<String, dynamic>> favorites =
+          await _favoritesService.getFavorites();
+
+      setState(() {
+        _favoriteCaregivers = favorites;
+        _isLoading = false;
+      });
+
+      print('DEBUG: Successfully loaded ${favorites.length} favorites');
+    } catch (e) {
+      print('ERROR: Failed to load favorites in UI: $e');
+      print('ERROR TYPE: ${e.runtimeType}');
+
+      setState(() {
+        _errorMessage = "Failed to load favorites: ${e.toString()}";
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _removeFromFavorites(String caregiverId) async {
+    try {
+      await _favoritesService.removeFavorite(caregiverId);
+      await _loadFavorites();
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Removed from favorites")));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error removing favorite: $e")));
+    }
+  }
+
+  List<Map<String, dynamic>> get filteredCaregivers {
+    return _favoriteCaregivers;
+  }
+
+  Future<void> _debugFirebase() async {
+    try {
+      User? currentUser = _firebaseAuth.currentUser;
+      if (currentUser == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+        return;
+      }
+
+      // Direct Firebase query
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('favorites')
+              .where('userId', isEqualTo: currentUser.uid)
+              .get();
+
+      String debugInfo = 'Found ${snapshot.docs.length} favorites:\n';
+      for (var doc in snapshot.docs) {
+        debugInfo += '- ${doc.data()['name']} (${doc.id})\n';
+      }
+
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Firebase Debug Info'),
+              content: SingleChildScrollView(child: Text(debugInfo)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+      );
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Firebase Error'),
+              content: Text('Error: $e'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
     super.dispose();
-  }
-
-  void toggleFilter() {
-    setState(() {
-      showFilter = !showFilter;
-      if (showFilter) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.only(
-                  top: 50,
-                  bottom: 20,
-                  left: 20,
-                  right: 20,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue[700],
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'Favorite',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-
-              // Caregiver List
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: filteredCaregivers.length,
-                  itemBuilder: (context, index) {
-                    final caregiver = filteredCaregivers[index];
-                    return CaregiverCard(caregiver: caregiver);
-                  },
-                ),
-              ),
-            ],
-          ),
-
-          // Filter FAB
-          Positioned(
-            bottom: 30,
-            right: 30,
-            child: FloatingActionButton(
-              onPressed: toggleFilter,
-              backgroundColor: Colors.orange,
-              child: const Icon(
-                Icons.filter_list,
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-          ),
-
-          // Filter Bottom Sheet
-          if (showFilter)
-            GestureDetector(
-              onTap: toggleFilter,
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-              ),
-            ),
-
-          if (showFilter)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: FilterBottomSheet(
-                  filterOptions: filterOptions,
-                  selectedFilter: selectedFilter,
-                  onFilterSelected: (filter) {
-                    setState(() {
-                      selectedFilter = filter;
-                    });
-                    toggleFilter();
-                  },
-                  onClose: toggleFilter,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class CaregiverCard extends StatelessWidget {
-  final Caregiver caregiver;
-
-  const CaregiverCard({super.key, required this.caregiver});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Image placeholder
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.person,
-                size: 30,
-                color: Colors.blue[300],
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Caregiver info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    caregiver.name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    caregiver.price,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Favorite icon
-            const Icon(
-              Icons.favorite,
-              color: Colors.red,
-              size: 24,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class FilterBottomSheet extends StatelessWidget {
-  final List<String> filterOptions;
-  final String? selectedFilter;
-  final Function(String) onFilterSelected;
-  final VoidCallback onClose;
-
-  const FilterBottomSheet({
-    super.key,
-    required this.filterOptions,
-    required this.selectedFilter,
-    required this.onFilterSelected,
-    required this.onClose,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
+          /// HEADER
           Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+            padding: const EdgeInsets.only(
+              top: 50,
+              bottom: 20,
+              left: 20,
+              right: 20,
             ),
-          ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue[700],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Filter',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.blue),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: onClose,
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'Favorites',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                // Refresh button
+                CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.blue),
+                    onPressed: _loadFavorites,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Filter options
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: filterOptions.length,
-              itemBuilder: (context, index) {
-                final option = filterOptions[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Material(
-                    color: Colors.blue[600],
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      onTap: () => onFilterSelected(option),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                        child: Text(
-                          option,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+          /// LIST
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? Center(child: Text(_errorMessage!))
+                    : _favoriteCaregivers.isEmpty
+                    ? const Center(child: Text("No favorites yet"))
+                    : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _favoriteCaregivers.length,
+                      itemBuilder: (context, index) {
+                        final caregiver = _favoriteCaregivers[index];
+
+                        return FavoriteCaregiverCard(
+                          caregiver: caregiver,
+                          onRemove: () {
+                            _removeFromFavorites(caregiver['caregiverId']);
+                          },
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FavoriteCaregiverCard extends StatelessWidget {
+  final Map<String, dynamic> caregiver;
+  final VoidCallback onRemove;
+
+  const FavoriteCaregiverCard({
+    super.key,
+    required this.caregiver,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () {
+          // Navigate to service details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => BookPage(
+                    service: ServiceModel(
+                      imageUrl:
+                          caregiver['imageUrl']?.startsWith('http') == true
+                              ? caregiver['imageUrl']
+                              : caregiver['imageUrl'] ??
+                                  'assets/images/default.jpg',
+                      title: caregiver['name'] ?? 'Unknown Service',
+                      rating: (caregiver['rating'] ?? 0.0).toDouble(),
+                      price: caregiver['price'] ?? 'Price not available',
+                      location:
+                          caregiver['location'] ?? 'Location not specified',
+                      experience:
+                          caregiver['subtitle'] ??
+                          caregiver['experience'] ??
+                          'Experience not specified',
+                      description:
+                          caregiver['description'] ??
+                          'Professional caregiver service providing quality care and support.',
+                      features:
+                          caregiver['features'] ??
+                          [
+                            'Experienced and trained caregiver',
+                            'Background verified',
+                            'Compassionate and reliable',
+                            'Flexible scheduling',
+                          ],
                     ),
                   ),
-                );
+            ),
+          );
+        },
+        child: ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              caregiver['imageUrl'] ?? "",
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.person, size: 40);
               },
             ),
           ),
-          const SizedBox(height: 20),
-        ],
+          title: Text(caregiver['name'] ?? "Unknown"),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(caregiver['price'] ?? ""),
+              if (caregiver['subtitle'] != null) Text(caregiver['subtitle']),
+            ],
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.favorite, color: Colors.red),
+            onPressed: onRemove,
+          ),
+        ),
       ),
     );
   }

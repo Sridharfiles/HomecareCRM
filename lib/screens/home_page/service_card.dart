@@ -1,14 +1,13 @@
 // card.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homecarecrm/screens/caregiver_details_page/caregiver_details_page.dart';
+import 'package:homecarecrm/services/favorites_service.dart';
 
 class ServiceCard extends StatefulWidget {
   final ServiceModel service;
 
-  const ServiceCard({
-    Key? key,
-    required this.service,
-  }) : super(key: key);
+  const ServiceCard({Key? key, required this.service}) : super(key: key);
 
   @override
   State<ServiceCard> createState() => _ServiceCardState();
@@ -16,6 +15,77 @@ class ServiceCard extends StatefulWidget {
 
 class _ServiceCardState extends State<ServiceCard> {
   bool isFavorite = false;
+  final FavoritesService _favoritesService = FavoritesService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  Future<void> _checkIfFavorite() async {
+    String caregiverId = _generateCaregiverId();
+    bool favorite = await _favoritesService.isFavorite(caregiverId);
+    setState(() {
+      isFavorite = favorite;
+    });
+  }
+
+  String _generateCaregiverId() {
+    // Generate a unique ID based on service title
+    return widget.service.title.toLowerCase().replaceAll(' ', '_');
+  }
+
+  Future<void> _toggleFavorite() async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to add favorites')),
+      );
+      return;
+    }
+
+    try {
+      // Create caregiver data map
+      Map<String, dynamic> caregiverData = {
+        'id': _generateCaregiverId(),
+        'name': widget.service.title,
+        'subtitle': widget.service.experience,
+        'rating': widget.service.rating,
+        'price': widget.service.price,
+        'isFree': widget.service.price.toLowerCase().contains('free'),
+        'imageUrl': widget.service.imageUrl,
+        'category': 'Home Care', // Default category
+      };
+
+      bool isNowFavorite = await _favoritesService.toggleFavorite(
+        caregiverData,
+      );
+
+      setState(() {
+        isFavorite = isNowFavorite;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isNowFavorite
+                ? '${widget.service.title} added to favorites'
+                : '${widget.service.title} removed from favorites',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating favorites: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,11 +134,7 @@ class _ServiceCardState extends State<ServiceCard> {
                   top: 8,
                   right: 8,
                   child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        isFavorite = !isFavorite;
-                      });
-                    },
+                    onTap: _toggleFavorite,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(

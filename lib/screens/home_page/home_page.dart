@@ -23,10 +23,7 @@ class HomePage extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
-                  colors: [
-                    Color(0xFF0D6EFD),
-                    Color(0xFF1E88E5),
-                  ],
+                  colors: [Color(0xFF0D6EFD), Color(0xFF1E88E5)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -161,8 +158,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-
-
             // Popular Services Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -197,7 +192,10 @@ class HomePage extends StatelessWidget {
             // Service Cards Grid
             Expanded(
               child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 0.68,
@@ -227,15 +225,8 @@ class HomePage extends StatelessWidget {
         Container(
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 32,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          child: Icon(icon, color: iconColor, size: 32),
         ),
         const SizedBox(height: 8),
         Text(
@@ -251,4 +242,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-

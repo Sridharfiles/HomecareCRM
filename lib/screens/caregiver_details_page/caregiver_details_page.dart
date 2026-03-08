@@ -29,12 +29,44 @@ class _BookPageState extends State<BookPage> {
                 // Hero Image with Back Button and Favorite
                 Stack(
                   children: [
-                    Image.asset(
-                      widget.service.imageUrl,
-                      width: double.infinity,
-                      height: 300,
-                      fit: BoxFit.cover,
-                    ),
+                    // Handle both network and asset images
+                    widget.service.imageUrl.startsWith('http')
+                        ? Image.network(
+                          widget.service.imageUrl,
+                          width: double.infinity,
+                          height: 300,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 300,
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.person,
+                                size: 80,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        )
+                        : Image.asset(
+                          widget.service.imageUrl,
+                          width: double.infinity,
+                          height: 300,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 300,
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.person,
+                                size: 80,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        ),
                     // Back Button
                     Positioned(
                       top: 50,

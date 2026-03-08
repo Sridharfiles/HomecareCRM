@@ -1,10 +1,131 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homecarecrm/screens/caregiver_details_page/caregiver_details_page.dart';
 import 'package:homecarecrm/screens/home_page/service_card.dart';
 import 'package:homecarecrm/screens/Menu/search_page/auto_parts_search_screen.dart';
+import 'package:homecarecrm/services/favorites_service.dart';
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
+
+  @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+// Sample caregivers data with IDs
+final List<Map<String, dynamic>> caregivers = [
+  {
+    'id': 'caregiver_1',
+    'name': 'Sarah Johnson',
+    'subtitle': '5 years experience',
+    'rating': 4.8,
+    'price': '\$25/hr',
+    'isFree': false,
+    'imageUrl': 'assets/images/caregiver1.jpg',
+    'category': 'Companion Care',
+  },
+  {
+    'id': 'caregiver_2',
+    'name': 'Michael Chen',
+    'subtitle': '3 years experience',
+    'rating': 4.6,
+    'price': '\$30/hr',
+    'isFree': false,
+    'imageUrl': 'assets/images/caregiver2.jpg',
+    'category': 'Medical Care',
+  },
+  {
+    'id': 'caregiver_3',
+    'name': 'Emily Davis',
+    'subtitle': '7 years experience',
+    'rating': 4.9,
+    'price': '\$35/hr',
+    'isFree': false,
+    'imageUrl': 'assets/images/caregiver3.jpg',
+    'category': 'Companion Care',
+  },
+];
+
+class _SearchScreenState extends State<SearchScreen> {
+  final FavoritesService _favoritesService = FavoritesService();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final Set<String> _favoriteCaregivers = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteStatuses();
+  }
+
+  Future<void> _loadFavoriteStatuses() async {
+    User? currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) return;
+
+    // Load favorite status for each caregiver
+    for (var caregiver in caregivers) {
+      bool isFavorite = await _favoritesService.isFavorite(
+        caregiver['id'] ?? caregiver['name'],
+      );
+      if (isFavorite) {
+        _favoriteCaregivers.add(caregiver['id'] ?? caregiver['name']);
+      }
+    }
+    setState(() {});
+  }
+
+  Future<void> _toggleFavorite(Map<String, dynamic> caregiver) async {
+    User? currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to add favorites'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    try {
+      String caregiverId = caregiver['id'] ?? caregiver['name'];
+
+      print('DEBUG: Attempting to toggle favorite for: ${caregiver['name']}');
+      print('DEBUG: Caregiver data: $caregiver');
+      print('DEBUG: Caregiver ID: $caregiverId');
+
+      bool isNowFavorite = await _favoritesService.toggleFavorite(caregiver);
+
+      print('DEBUG: Toggle result: $isNowFavorite');
+
+      setState(() {
+        if (isNowFavorite) {
+          _favoriteCaregivers.add(caregiverId);
+        } else {
+          _favoriteCaregivers.remove(caregiverId);
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isNowFavorite
+                ? '${caregiver['name']} added to favorites'
+                : '${caregiver['name']} removed from favorites',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      print('ERROR: Failed to toggle favorite: $e');
+      print('ERROR TYPE: ${e.runtimeType}');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating favorites: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +205,10 @@ class SearchScreen extends StatelessWidget {
                     price: caregiver['price'],
                     isFree: caregiver['isFree'],
                     imageUrl: caregiver['imageUrl'],
+                    isFavorite: _favoriteCaregivers.contains(
+                      caregiver['id'] ?? caregiver['name'],
+                    ),
+                    onFavoriteToggle: () => _toggleFavorite(caregiver),
                   );
                 },
               ),
@@ -132,6 +257,8 @@ class CaregiverCard extends StatelessWidget {
   final String price;
   final bool isFree;
   final String imageUrl;
+  final bool isFavorite;
+  final VoidCallback? onFavoriteToggle;
 
   const CaregiverCard({
     super.key,
@@ -141,6 +268,8 @@ class CaregiverCard extends StatelessWidget {
     required this.price,
     required this.isFree,
     required this.imageUrl,
+    this.isFavorite = false,
+    this.onFavoriteToggle,
   });
 
   @override
@@ -284,6 +413,17 @@ class CaregiverCard extends StatelessWidget {
             // Action buttons
             Row(
               children: [
+                // Favorite button
+                IconButton(
+                  onPressed: onFavoriteToggle,
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : Colors.grey,
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
                 // Cancel button
                 Expanded(
                   child: SizedBox(
@@ -369,103 +509,3 @@ class CaregiverCard extends StatelessWidget {
     );
   }
 }
-
-// Sample caregiver data with home page images
-final List<Map<String, dynamic>> caregivers = [
-  {
-    'name': 'Professional Home Care Service',
-    'subtitle': '2',
-    'rating': 4.5,
-    'price': '\$28/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image1.jpg',
-  },
-  {
-    'name': 'Companion Care',
-    'subtitle': '2',
-    'rating': 4.8,
-    'price': 'Free',
-    'isFree': true,
-    'imageUrl': 'assets/images/image2.jpg',
-  },
-  {
-    'name': 'Family Caregiver Support',
-    'subtitle': '2',
-    'rating': 4.2,
-    'price': '\$15/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image3.jpg',
-  },
-  {
-    'name': 'Geriatric Caregiver',
-    'subtitle': '3',
-    'rating': 4.9,
-    'price': '\$35/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image4.jpg',
-  },
-  {
-    'name': 'Home Health Aide',
-    'subtitle': '4',
-    'rating': 4.6,
-    'price': '\$22/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image5.jpg',
-  },
-  {
-    'name': 'Respite Care',
-    'subtitle': '2',
-    'rating': 4.7,
-    'price': '\$32/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image6.jpg',
-  },
-  {
-    'name': 'Dementia Care Expert',
-    'subtitle': '1',
-    'rating': 4.4,
-    'price': '\$38/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image1.jpg',
-  },
-  {
-    'name': 'Post-Surgery Caregiver',
-    'subtitle': '2',
-    'rating': 4.3,
-    'price': '\$30/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image2.jpg',
-  },
-  {
-    'name': 'Physical Therapy Assistant',
-    'subtitle': '3',
-    'rating': 4.8,
-    'price': '\$25/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image3.jpg',
-  },
-  {
-    'name': 'Mental Health Support',
-    'subtitle': '2',
-    'rating': 4.1,
-    'price': '\$20/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image4.jpg',
-  },
-  {
-    'name': 'Palliative Care Specialist',
-    'subtitle': '1',
-    'rating': 4.9,
-    'price': '\$45/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image5.jpg',
-  },
-  {
-    'name': 'Child Care Specialist',
-    'subtitle': '5',
-    'rating': 4.6,
-    'price': '\$18/hr',
-    'isFree': false,
-    'imageUrl': 'assets/images/image6.jpg',
-  },
-];
