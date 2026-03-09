@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../services/payment_services.dart';
 import 'serviceconfirmation_page.dart';
 import '../home_page/service_card.dart';
 
@@ -23,24 +24,27 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String selectedDate = '';
-  String selectedTimeSlot = '';
-  String selectedPaymentMethod = 'paypal'; // paypal, cash, card
+  late PaymentService _paymentService;
+  bool _isProcessing = false;
+  String selectedPaymentMethod = 'paypal'; // paypal, cash, card, upi
   String cardHolderName = '';
   String cardNumber = '';
   String expiryDate = '';
   String cvv = '';
+  String upiId = '';
 
-  final List<String> timeSlots = [
-    '8 AM – 11 AM',
-    '11 AM – 1 PM',
-    '2 PM – 5 PM',
-    '5 PM – 8 PM',
-    '8 PM – 11 PM',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _paymentService = PaymentService();
+  }
 
   // Price calculation
   double get subtotal {
+    // For UPI testing, return 0 to make total = 1.0
+    if (selectedPaymentMethod == 'upi') {
+      return 0.0;
+    }
     // Parse service price and multiply by selected hours
     // Remove $ and /hr, then extract only the numerical part
     final priceString =
@@ -50,8 +54,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   double get couponDiscount => 0.0; // No coupon by default
-  double get deliveryFee => 15.0; // Fixed delivery fee
+  double get deliveryFee => 1.0; // Fixed delivery fee for testing (in INR for UPI)
   double get total => subtotal - couponDiscount + deliveryFee;
+
+  // Get currency symbol based on payment method
+  String get currencySymbol {
+    if (selectedPaymentMethod == 'upi') {
+      return '₹'; // Indian Rupee for UPI
+    }
+    return '\$'; // USD for PayPal and others
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,160 +106,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Expected Date & Time Section
-            const Text(
-              'Expected date & Time',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Select Date Field
-                  GestureDetector(
-                    onTap: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 30)),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          selectedDate =
-                              '${picked.day}/${picked.month}/${picked.year}';
-                        });
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_today,
-                            color: Color(0xFF0D6EFD),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              selectedDate.isEmpty
-                                  ? 'Select Date'
-                                  : selectedDate,
-                              style: TextStyle(
-                                color:
-                                    selectedDate.isEmpty
-                                        ? Colors.grey
-                                        : const Color(0xFF444444),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                          const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Time Slot Buttons
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Select Time Slot',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        timeSlots.map((timeSlot) {
-                          final isSelected = selectedTimeSlot == timeSlot;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedTimeSlot = timeSlot;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    isSelected
-                                        ? const Color(0xFFFFA000)
-                                        : const Color(0xFFF2F2F2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color:
-                                      isSelected
-                                          ? const Color(0xFFFFA000)
-                                          : const Color(0xFFDDDDDD),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    timeSlot,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color:
-                                          isSelected
-                                              ? Colors.white
-                                              : const Color(0xFF555555),
-                                      fontWeight:
-                                          isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                    ),
-                                  ),
-                                  if (isSelected) ...[
-                                    const SizedBox(width: 4),
-                                    const Icon(
-                                      Icons.check,
-                                      size: 14,
-                                      color: Colors.white,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
             // Payment Method Section
             const Text(
               'Payment Method',
@@ -415,6 +273,76 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Divider Line
+                  Container(height: 1, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+
+                  // UPI Option
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedPaymentMethod = 'upi';
+                      });
+                    },
+                    child: Row(
+                      children: [
+                        // UPI Icon
+                        Container(
+                          width: 40,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6B63B5).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.mobileScreen,
+                              color: Color(0xFF6B63B5),
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Pay with UPI',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF222222),
+                            ),
+                          ),
+                        ),
+                        // Radio Button
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color:
+                                  selectedPaymentMethod == 'upi'
+                                      ? const Color(0xFFFFA000)
+                                      : Colors.grey.shade400,
+                              width: 2,
+                            ),
+                          ),
+                          child:
+                              selectedPaymentMethod == 'upi'
+                                  ? const Center(
+                                    child: Icon(
+                                      Icons.circle,
+                                      size: 10,
+                                      color: Color(0xFFFFA000),
+                                    ),
+                                  )
+                                  : null,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -503,6 +431,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
 
+
             // Service Details Section
             const Text(
               'Service Details',
@@ -586,15 +515,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   _buildPriceRow(
                     'Sub total',
-                    '\$${subtotal.toStringAsFixed(2)}',
+                    '$currencySymbol${subtotal.toStringAsFixed(2)}',
                   ),
                   _buildPriceRow(
                     'Coupon',
-                    '-\$${couponDiscount.toStringAsFixed(2)}',
+                    '-$currencySymbol${couponDiscount.toStringAsFixed(2)}',
                   ),
                   _buildPriceRow(
                     'Delivery Fee',
-                    '\$${deliveryFee.toStringAsFixed(2)}',
+                    '$currencySymbol${deliveryFee.toStringAsFixed(2)}',
                   ),
                   Container(
                     height: 1,
@@ -603,7 +532,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   _buildPriceRow(
                     'Total',
-                    '\$${total.toStringAsFixed(2)}',
+                    '$currencySymbol${total.toStringAsFixed(2)}',
                     isTotal: true,
                   ),
                 ],
@@ -615,7 +544,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: _isProcessing ? null : () {
                   _validateAndProceed();
                 },
                 style: ElevatedButton.styleFrom(
@@ -625,11 +554,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  disabledBackgroundColor: Colors.grey[400],
                 ),
-                child: const Text(
-                  'Proceed',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : const Text(
+                      'Proceed',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
               ),
             ),
             const SizedBox(height: 20),
@@ -640,27 +578,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _validateAndProceed() {
-    // Validate date selection
-    if (selectedDate.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a date')));
-      return;
-    }
-
-    // Validate time slot selection
-    if (selectedTimeSlot.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a time slot')),
-      );
-      return;
-    }
-
     // Validate payment method
     if (selectedPaymentMethod.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a payment method')),
-      );
+      _showError('Please select a payment method');
       return;
     }
 
@@ -670,24 +590,148 @@ class _PaymentScreenState extends State<PaymentScreen> {
           cardNumber.isEmpty ||
           expiryDate.isEmpty ||
           cvv.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please fill all card details')),
-        );
+        _showError('Please fill all card details');
         return;
       }
     }
 
-    // Navigate to service confirmation screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => ServiceConfirmationScreen(
+    // Process payment
+    _processPayment();
+  }
+
+  Future<void> _processPayment() async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // Generate a transaction ID for this payment
+      final transactionId = 'TXN_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Process payment based on method
+      Map<String, dynamic> paymentResult = {};
+
+      if (selectedPaymentMethod == 'paypal') {
+        paymentResult = await _paymentService.processPayPalPayment(
+          cardHolderName: cardHolderName,
+          cardNumber: cardNumber,
+          expiryDate: expiryDate,
+          cvv: cvv,
+          amount: total,
+          bookingId: transactionId,
+        );
+      } else if (selectedPaymentMethod == 'upi') {
+        // For UPI, first launch the UPI app
+        final upiLaunched = await _paymentService.initiateUpiPayment(
+          amount: total.toStringAsFixed(2),
+        );
+
+        if (!mounted) return;
+
+        if (!upiLaunched) {
+          _showError('Failed to launch UPI app. Please try again.');
+          setState(() {
+            _isProcessing = false;
+          });
+          return;
+        }
+
+        // Ask user to confirm payment completion
+        final paymentConfirmed = await _showPaymentConfirmationDialog();
+
+        if (!paymentConfirmed) {
+          _showError('Payment was not completed');
+          setState(() {
+            _isProcessing = false;
+          });
+          return;
+        }
+
+        // User confirmed payment - create payment record
+        paymentResult = await _paymentService.processUPIPayment(
+          amount: total,
+          bookingId: transactionId,
+        );
+      } else if (selectedPaymentMethod == 'cash') {
+        paymentResult = await _paymentService.processCashPayment(
+          amount: total,
+          bookingId: transactionId,
+        );
+      }
+
+      if (!mounted) return;
+
+      if (paymentResult['success'] == true) {
+        // Payment completed successfully - navigate to confirmation screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ServiceConfirmationScreen(
               service: widget.service,
               selectedDate: widget.selectedDate,
               selectedTime: widget.selectedTime,
               selectedHours: widget.selectedHours,
+              paymentMethod: selectedPaymentMethod,
+              cost: total,
+              paymentId: paymentResult['paymentId'] ?? transactionId,
+              cardHolderName:
+                  cardHolderName.isEmpty ? null : cardHolderName,
+              cardNumber: cardNumber.isEmpty ? null : cardNumber,
+              expiryDate: expiryDate.isEmpty ? null : expiryDate,
+              cvv: cvv.isEmpty ? null : cvv,
+              upiId: upiId.isEmpty ? null : upiId,
             ),
+          ),
+        );
+      } else {
+        _showError(paymentResult['message'] ?? 'Payment processing failed');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Error: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  Future<bool> _showPaymentConfirmationDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Payment Confirmation'),
+          content: const Text(
+            'Have you completed the UPI payment successfully?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No, Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+              ),
+              child: const Text('Yes, Completed'),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
   }

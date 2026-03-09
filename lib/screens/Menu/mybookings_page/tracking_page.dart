@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class TrackingScreen extends StatelessWidget {
-  final String serviceId;
   final String caregiverName;
   final String serviceType;
   final String appointmentDateTime;
@@ -10,7 +9,6 @@ class TrackingScreen extends StatelessWidget {
 
   const TrackingScreen({
     super.key,
-    required this.serviceId,
     required this.caregiverName,
     required this.serviceType,
     required this.appointmentDateTime,
@@ -46,7 +44,6 @@ class TrackingScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             BookingDetailsCard(
-              serviceId: serviceId,
               caregiverName: caregiverName,
               serviceType: serviceType,
               appointmentDateTime: appointmentDateTime,
@@ -74,7 +71,6 @@ class TrackingScreen extends StatelessWidget {
 }
 
 class BookingDetailsCard extends StatelessWidget {
-  final String serviceId;
   final String caregiverName;
   final String serviceType;
   final String appointmentDateTime;
@@ -83,7 +79,6 @@ class BookingDetailsCard extends StatelessWidget {
 
   const BookingDetailsCard({
     super.key,
-    required this.serviceId,
     required this.caregiverName,
     required this.serviceType,
     required this.appointmentDateTime,
@@ -111,7 +106,6 @@ class BookingDetailsCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            DetailRow(label: 'Service ID', value: serviceId, isBold: true),
             DetailRow(label: 'Service Type', value: serviceType),
             DetailRow(label: 'Appointment', value: appointmentDateTime),
             DetailRow(label: 'Caregiver', value: caregiverName),

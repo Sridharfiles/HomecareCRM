@@ -503,8 +503,6 @@ class _MyBookingsPageState extends State<MyBookingsPage>
                               MaterialPageRoute(
                                 builder:
                                     (context) => TrackingScreen(
-                                      serviceId:
-                                          'service_${booking['title'].toString().toLowerCase().replaceAll(' ', '_')}',
                                       caregiverName: 'John Doe',
                                       serviceType: booking['title'],
                                       appointmentDateTime:
