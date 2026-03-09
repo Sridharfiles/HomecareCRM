@@ -101,8 +101,6 @@ class AppointmentConfirmationScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder:
                             (context) => TrackingScreen(
-                              serviceId:
-                                  '#CGR${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}',
                               caregiverName: 'John Doe (Certified Nurse)',
                               serviceType: service.title,
                               appointmentDateTime:
