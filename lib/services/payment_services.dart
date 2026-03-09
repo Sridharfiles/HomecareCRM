@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -7,8 +8,8 @@ class PaymentService {
 
   // Payment Gateway Configuration
   static const String MERCHANT_UPI_ID = 'sridharkumaresan4-1@okicici';
-  static const double BASE_PRICE = 0.2; // in rupees (INR)
-  static const double DELIVERY_FEE = 0.3; // in rupees (Developer testing fee)
+  static const double BASE_PRICE = 0.0; // in rupees (INR) - Subtotal is 0 for UPI testing
+  static const double DELIVERY_FEE = 1.0; // Fixed delivery fee for testing (in INR for UPI)
 
   // References to collections
   CollectionReference get paymentsCollection =>
@@ -28,9 +29,9 @@ class PaymentService {
     return total;
   }
 
-  /// Process UPI Payment
+  /// Process Real UPI Payment - Creates payment record after UPI transaction
   Future<Map<String, dynamic>> processUPIPayment({
-    required String userUpiId,
+    String? userUpiId,
     required double amount,
     required String bookingId,
   }) async {
@@ -40,22 +41,18 @@ class PaymentService {
         throw Exception('User not authenticated');
       }
 
-      // Validate UPI ID format
-      if (!_isValidUPI(userUpiId)) {
-        throw Exception('Invalid UPI ID format');
-      }
-
-      // Create payment record
+      // Create payment record in Firestore
+      final transactionId = 'TXN_${DateTime.now().millisecondsSinceEpoch}';
       final paymentData = {
         'userId': user.uid,
         'userEmail': user.email,
         'bookingId': bookingId,
         'paymentMethod': 'upi',
-        'userUpiId': userUpiId,
         'merchantUpiId': MERCHANT_UPI_ID,
         'amount': amount,
         'currency': 'INR',
-        'status': 'pending',
+        'status': 'completed',
+        'transactionId': transactionId,
         'createdAt': Timestamp.now(),
         'updatedAt': Timestamp.now(),
       };
@@ -66,16 +63,57 @@ class PaymentService {
       return {
         'success': true,
         'paymentId': docRef.id,
-        'message': 'Payment initiated successfully',
+        'message': 'Payment completed successfully',
         'amount': amount,
-        'upiId': userUpiId,
         'merchantUpiId': MERCHANT_UPI_ID,
+        'transactionId': transactionId,
       };
     } catch (e) {
       return {
         'success': false,
         'message': 'Error processing payment: ${e.toString()}',
       };
+    }
+  }
+
+  /// Initiate actual UPI transaction using url_launcher with UPI deep links
+  Future<bool> initiateUpiPayment({
+    required String amount,
+    String? userUpiId,
+  }) async {
+    try {
+      // Build UPI URL as raw string to avoid encoding issues
+      final txnRef = 'TXN_${DateTime.now().millisecondsSinceEpoch}';
+      final upiUrl = Uri.parse(
+        'upi://pay?pa=$MERCHANT_UPI_ID'
+        '&pn=HomecareCRM'
+        '&mc=5960'
+        '&am=$amount'
+        '&cu=INR'
+        '&tn=ServicePayment'
+        '&tr=$txnRef',
+      );
+
+      // Launch UPI app directly - canLaunchUrl is unreliable for custom schemes
+      try {
+        final launched = await launchUrl(
+          upiUrl,
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!launched) {
+          print('Failed to launch UPI app');
+          return false;
+        }
+
+        return true;
+      } catch (launchError) {
+        print('Launch error: $launchError');
+        return false;
+      }
+    } catch (e) {
+      print('UPI Error: $e');
+      return false;
     }
   }
 
@@ -119,7 +157,7 @@ class PaymentService {
         'cvv': _maskCVV(cvv),
         'amount': amount,
         'currency': 'USD',
-        'status': 'pending',
+        'status': 'completed',
         'createdAt': Timestamp.now(),
         'updatedAt': Timestamp.now(),
       };
@@ -130,7 +168,7 @@ class PaymentService {
       return {
         'success': true,
         'paymentId': docRef.id,
-        'message': 'Payment initiated successfully',
+        'message': 'Payment completed successfully',
         'amount': amount,
       };
     } catch (e) {
@@ -160,7 +198,7 @@ class PaymentService {
         'paymentMethod': 'cash',
         'amount': amount,
         'currency': 'INR',
-        'status': 'pending',
+        'status': 'completed',
         'paymentType': 'cash_on_delivery',
         'createdAt': Timestamp.now(),
         'updatedAt': Timestamp.now(),
@@ -172,7 +210,7 @@ class PaymentService {
       return {
         'success': true,
         'paymentId': docRef.id,
-        'message': 'Cash on delivery confirmed',
+        'message': 'Payment completed successfully',
         'amount': amount,
       };
     } catch (e) {

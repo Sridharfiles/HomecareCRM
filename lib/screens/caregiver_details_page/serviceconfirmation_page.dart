@@ -9,6 +9,8 @@ class ServiceConfirmationScreen extends StatefulWidget {
   final TimeOfDay selectedTime;
   final int selectedHours;
   final String paymentMethod;
+  final double cost;
+  final String paymentId;
   final String? cardHolderName;
   final String? cardNumber;
   final String? expiryDate;
@@ -22,6 +24,8 @@ class ServiceConfirmationScreen extends StatefulWidget {
     required this.selectedTime,
     required this.selectedHours,
     required this.paymentMethod,
+    required this.cost,
+    required this.paymentId,
     this.cardHolderName,
     this.cardNumber,
     this.expiryDate,
@@ -59,6 +63,8 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
         selectedTime: widget.selectedTime,
         selectedHours: widget.selectedHours,
         paymentMethod: widget.paymentMethod,
+        cost: widget.cost,
+        paymentId: widget.paymentId,
         cardHolderName: widget.cardHolderName,
         cardNumber: widget.cardNumber,
         expiryDate: widget.expiryDate,
@@ -253,7 +259,6 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
                                   _buildSectionTitle('Service Cost Breakdown:'),
                                   const SizedBox(height: 12),
                                   _buildCostRow('Service Fee', widget.service.price),
-                                  _buildCostRow('Additional Charges', '\$15'),
 
                                   Container(
                                     height: 1,
@@ -264,8 +269,8 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
                                   ),
 
                                   _buildTotalRow(
-                                    'Total',
-                                    '\$${_calculateTotal()}',
+                                    'Total Cost',
+                                    '${_getCurrencySymbol()}${widget.cost.toStringAsFixed(2)}',
                                   ),
 
                                   const SizedBox(height: 32),
@@ -291,7 +296,7 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
                                                         widget.paymentMethod,
                                                       ),
                                                   totalAmount:
-                                                      '\$${_calculateTotal()}',
+                                                      '${_getCurrencySymbol()}${widget.cost.toStringAsFixed(2)}',
                                                 ),
                                           ),
                                         );
@@ -327,6 +332,10 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
     );
   }
 
+  String _getCurrencySymbol() {
+    return widget.paymentMethod == 'upi' ? '₹' : '\$';
+  }
+
   String _getPaymentMethodDisplay(String method) {
     switch (method) {
       case 'paypal':
@@ -338,16 +347,6 @@ class _ServiceConfirmationScreenState extends State<ServiceConfirmationScreen> {
       default:
         return method;
     }
-  }
-
-  String _calculateTotal() {
-    final priceString = widget.service.price
-        .replaceAll('\$', '')
-        .replaceAll('/hr', '')
-        .trim();
-    final servicePrice = double.parse(priceString);
-    final total = (servicePrice * widget.selectedHours) + 15;
-    return total.toStringAsFixed(2);
   }
 
   Widget _buildSectionTitle(String title) {

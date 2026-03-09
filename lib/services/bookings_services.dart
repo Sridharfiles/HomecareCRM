@@ -9,6 +9,9 @@ class BookingService {
 
   // Reference to bookings collection
   CollectionReference get bookingsCollection => _firestore.collection('bookings');
+  
+  // Reference to bookings_payments collection for payment linkage
+  CollectionReference get bookingsPaymentsCollection => _firestore.collection('bookings_payments');
 
   /// Create a new booking with service details
   Future<String> createBooking({
@@ -17,6 +20,8 @@ class BookingService {
     required TimeOfDay selectedTime,
     required int selectedHours,
     required String paymentMethod,
+    required double cost,
+    required String paymentId,
     String? cardHolderName,
     String? cardNumber,
     String? expiryDate,
@@ -35,7 +40,7 @@ class BookingService {
       final minute = selectedTime.minute.toString().padLeft(2, '0');
       final formattedTime = '$hour:$minute $period';
 
-      // Create booking document
+      // Create booking document (only booking details, no payment info)
       final bookingData = {
         // User Information
         'userId': user.uid,
@@ -46,31 +51,45 @@ class BookingService {
         'selectedDate': selectedDate,
         'selectedTime': formattedTime,
         'selectedHours': selectedHours,
+        'serviceTitle': service.title,
+        'servicePrice': service.price,
 
-        // Payment Information
-        'paymentMethod': paymentMethod, // 'paypal', 'cash', or 'upi'
+        // Status and timestamps
+        'bookingStatus': 'pending',
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
       };
-
-      // Add payment method specific details
-      if (paymentMethod == 'paypal') {
-        bookingData['cardHolderName'] = cardHolderName;
-        bookingData['cardNumber'] = cardNumber;
-        bookingData['expiryDate'] = expiryDate;
-        bookingData['cvv'] = cvv;
-      } else if (paymentMethod == 'upi') {
-        bookingData['upiId'] = upiId;
-      }
-      // For 'cash', no additional payment details are stored
-
-      // Add status and timestamps
-      bookingData['bookingStatus'] = 'pending';
-      bookingData['createdAt'] = Timestamp.now();
-      bookingData['updatedAt'] = Timestamp.now();
 
       // Add booking to Firestore
       DocumentReference docRef = await bookingsCollection.add(bookingData);
+      final bookingId = docRef.id;
 
-      return docRef.id; // Return booking ID
+      // Create booking_payment record linking booking with payment details
+      final bookingPaymentData = <String, dynamic>{
+        'bookingId': bookingId,
+        'paymentId': paymentId,
+        'userId': user.uid,
+        'paymentMethod': paymentMethod, // 'paypal', 'cash', or 'upi'
+        'cost': cost, // Total cost of service
+        'currency': paymentMethod == 'upi' ? 'INR' : 'USD',
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      };
+
+      // Add payment method specific details to booking_payment
+      if (paymentMethod == 'paypal') {
+        if (cardHolderName != null) bookingPaymentData['cardHolderName'] = cardHolderName;
+        if (cardNumber != null) bookingPaymentData['cardNumber'] = cardNumber;
+        if (expiryDate != null) bookingPaymentData['expiryDate'] = expiryDate;
+        if (cvv != null) bookingPaymentData['cvv'] = cvv;
+      } else if (paymentMethod == 'upi') {
+        if (upiId != null) bookingPaymentData['upiId'] = upiId;
+      }
+
+      // Add booking_payment record to Firestore
+      await bookingsPaymentsCollection.add(bookingPaymentData);
+
+      return bookingId; // Return booking ID
     } catch (e) {
       print('Error creating booking: $e');
       rethrow;

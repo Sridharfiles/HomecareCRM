@@ -26,12 +26,27 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   String selectedHours = '';
   String selectedTimePeriod = '';
 
-  final List<Map<String, String>> dates = [
-    {'date': '30 Jun', 'day': 'Thu'},
-    {'date': '01 Jul', 'day': 'Fri'},
-    {'date': '02 Jul', 'day': 'Sat'},
-    {'date': '03 Jul', 'day': 'Sun'},
+  // Generate next 15 days dynamically
+  late final List<DateTime> next15Days;
+
+  static const List<String> _weekdayNames = [
+    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
   ];
+
+  static const List<String> _monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final today = DateTime.now();
+    next15Days = List.generate(
+      15,
+      (i) => DateTime(today.year, today.month, today.day + i),
+    );
+  }
 
   final List<String> timeSlots = [
     '08:30 am',
@@ -104,9 +119,11 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
               height: 80,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: dates.length,
+                itemCount: next15Days.length,
                 itemBuilder: (context, index) {
+                  final date = next15Days[index];
                   final isSelected = selectedDateIndex == index;
+                  final isToday = index == 0;
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -132,7 +149,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            dates[index]['date']!,
+                            '${date.day.toString().padLeft(2, '0')} ${_monthNames[date.month - 1]}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -141,7 +158,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            dates[index]['day']!,
+                            isToday ? 'Today' : _weekdayNames[date.weekday - 1],
                             style: TextStyle(
                               fontSize: 12,
                               color:
@@ -396,9 +413,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   }
 
   DateTime _getSelectedDate() {
-    // Get current date and add the selected date index
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + selectedDateIndex);
+    return next15Days[selectedDateIndex];
   }
 
   TimeOfDay _getSelectedTime() {

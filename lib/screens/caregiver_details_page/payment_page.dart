@@ -41,6 +41,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // Price calculation
   double get subtotal {
+    // For UPI testing, return 0 to make total = 1.0
+    if (selectedPaymentMethod == 'upi') {
+      return 0.0;
+    }
     // Parse service price and multiply by selected hours
     // Remove $ and /hr, then extract only the numerical part
     final priceString =
@@ -50,7 +54,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   double get couponDiscount => 0.0; // No coupon by default
-  double get deliveryFee => 15.0; // Fixed delivery fee (in current currency)
+  double get deliveryFee => 1.0; // Fixed delivery fee for testing (in INR for UPI)
   double get total => subtotal - couponDiscount + deliveryFee;
 
   // Get currency symbol based on payment method
@@ -455,55 +459,43 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTextField(
-                          'Your UPI ID (username@bankname)',
-                          Icons.account_balance_wallet,
-                          (value) => upiId = value,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6B63B5).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B63B5).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Payment will be sent to:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Payment will be sent to:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              SelectableText(
-                                'sridharkumaresan4-1@okicici',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF6B63B5),
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Amount: $currencySymbol${total.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 4),
+                          SelectableText(
+                            'sridharkumaresan4-1@okicici',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B63B5),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            'Cost: $currencySymbol${total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -673,14 +665,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
 
-    // If UPI is selected, validate UPI ID
-    if (selectedPaymentMethod == 'upi') {
-      if (upiId.isEmpty || !upiId.contains('@')) {
-        _showError('Please enter a valid UPI ID (e.g., username@bankname)');
-        return;
-      }
-    }
-
     // Process payment
     _processPayment();
   }
@@ -707,8 +691,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
           bookingId: transactionId,
         );
       } else if (selectedPaymentMethod == 'upi') {
+        // For UPI, first launch the UPI app
+        final upiLaunched = await _paymentService.initiateUpiPayment(
+          amount: total.toStringAsFixed(2),
+        );
+
+        if (!mounted) return;
+
+        if (!upiLaunched) {
+          _showError('Failed to launch UPI app. Please try again.');
+          setState(() {
+            _isProcessing = false;
+          });
+          return;
+        }
+
+        // Ask user to confirm payment completion
+        final paymentConfirmed = await _showPaymentConfirmationDialog();
+
+        if (!paymentConfirmed) {
+          _showError('Payment was not completed');
+          setState(() {
+            _isProcessing = false;
+          });
+          return;
+        }
+
+        // User confirmed payment - create payment record
         paymentResult = await _paymentService.processUPIPayment(
-          userUpiId: upiId,
           amount: total,
           bookingId: transactionId,
         );
@@ -722,27 +732,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (!mounted) return;
 
       if (paymentResult['success'] == true) {
-        // Create booking payment record linking booking with payment details
-        final transactionId = paymentResult['paymentId'] ?? 'TXN_${DateTime.now().millisecondsSinceEpoch}';
-        
-        try {
-          await _paymentService.createBookingPayment(
-            bookingId: transactionId,
-            paymentMethod: selectedPaymentMethod,
-            amount: total,
-            userUpiId: selectedPaymentMethod == 'upi' ? upiId : null,
-            cardLast4: selectedPaymentMethod == 'paypal' 
-              ? cardNumber.length >= 4 
-                ? cardNumber.substring(cardNumber.length - 4)
-                : cardNumber
-              : null,
-          );
-        } catch (e) {
-          print('Warning: Could not create booking payment record: $e');
-          // Continue anyway, payment was processed
-        }
-
-        // Payment successful, navigate to confirmation screen
+        // Payment completed successfully - navigate to confirmation screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -752,6 +742,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
               selectedTime: widget.selectedTime,
               selectedHours: widget.selectedHours,
               paymentMethod: selectedPaymentMethod,
+              cost: total,
+              paymentId: paymentResult['paymentId'] ?? transactionId,
               cardHolderName:
                   cardHolderName.isEmpty ? null : cardHolderName,
               cardNumber: cardNumber.isEmpty ? null : cardNumber,
@@ -774,6 +766,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
       }
     }
+  }
+
+  Future<bool> _showPaymentConfirmationDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Payment Confirmation'),
+          content: const Text(
+            'Have you completed the UPI payment successfully?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No, Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+              ),
+              child: const Text('Yes, Completed'),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
   }
 
   void _showError(String message) {
