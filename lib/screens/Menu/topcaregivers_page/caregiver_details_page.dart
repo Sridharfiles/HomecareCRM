@@ -160,6 +160,7 @@ class CaregiverDetailsPage extends StatelessWidget {
                 onTap: () {
                   // Create a ServiceModel from caregiver data
                   final serviceModel = ServiceModel(
+                    id: 'top_caregiver_${caregiver.name}',
                     imageUrl: caregiver.image,
                     title: caregiver.name,
                     rating: caregiver.rating,

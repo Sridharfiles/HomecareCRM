@@ -4,6 +4,7 @@ import '../screens/home_page/service_card.dart';
 // Static service data
 final List<ServiceModel> serviceData = [
   ServiceModel(
+    id: 'caregiver_1',
     imageUrl: 'assets/images/image1.jpg',
     title: 'Professional Home Care Service',
     rating: 4.8,
@@ -20,6 +21,7 @@ final List<ServiceModel> serviceData = [
     ],
   ),
   ServiceModel(
+    id: 'caregiver_2',
     imageUrl: 'assets/images/image2.jpg',
     title: 'Companion Care',
     rating: 4.5,
@@ -36,6 +38,7 @@ final List<ServiceModel> serviceData = [
     ],
   ),
   ServiceModel(
+    id: 'caregiver_3',
     imageUrl: 'assets/images/image3.jpg',
     title: 'Family Caregiver Support',
     rating: 4.3,
@@ -52,6 +55,7 @@ final List<ServiceModel> serviceData = [
     ],
   ),
   ServiceModel(
+    id: 'caregiver_4',
     imageUrl: 'assets/images/image4.jpg',
     title: 'Geriatric Caregiver',
     rating: 4.7,
@@ -68,6 +72,7 @@ final List<ServiceModel> serviceData = [
     ],
   ),
   ServiceModel(
+    id: 'caregiver_5',
     imageUrl: 'assets/images/image5.jpg',
     title: 'Home Health Aide',
     rating: 4.9,
@@ -84,6 +89,7 @@ final List<ServiceModel> serviceData = [
     ],
   ),
   ServiceModel(
+    id: 'caregiver_6',
     imageUrl: 'assets/images/image6.jpg',
     title: 'Respite Care',
     rating: 4.6,

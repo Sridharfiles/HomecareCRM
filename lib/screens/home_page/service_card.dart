@@ -211,6 +211,7 @@ class _ServiceCardState extends State<ServiceCard> {
 }
 
 class ServiceModel {
+  final String id;
   final String imageUrl;
   final String title;
   final double rating;
@@ -221,6 +222,7 @@ class ServiceModel {
   final List<String> features;
 
   ServiceModel({
+    required this.id,
     required this.imageUrl,
     required this.title,
     required this.rating,

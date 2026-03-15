@@ -336,7 +336,7 @@ class _SlideDrawerState extends State<SlideDrawer> {
                 ),
                 _buildMenuItem(
                   icon: Icons.reviews,
-                  title: 'Reviwes',
+                  title: 'Reviews',
                   onTap: () {
                     Navigator.push(
                       context,

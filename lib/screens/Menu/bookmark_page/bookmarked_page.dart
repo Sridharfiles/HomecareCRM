@@ -13,6 +13,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
   // Sample bookmarked services data
   final List<ServiceModel> bookmarkedServices = [
     ServiceModel(
+      id: 'bookmark_1',
       imageUrl: 'assets/images/image2.jpg',
       title: 'Volunteer Caregiver',
       rating: 4.5,
@@ -28,6 +29,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_2',
       imageUrl: 'assets/images/image1.jpg',
       title: 'Companion Care',
       rating: 4.8,
@@ -43,6 +45,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_3',
       imageUrl: 'assets/images/image3.jpg',
       title: 'Agency Caregiver',
       rating: 4.3,
@@ -58,8 +61,9 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_4',
       imageUrl: 'assets/images/image4.jpg',
-      title: 'Family Caregiver',
+      title: 'Geriatric Caregiver',
       rating: 4.7,
       price: '\$18.50/hr',
       location: 'Available in Miami & Nearby Areas',
@@ -73,6 +77,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_5',
       imageUrl: 'assets/images/image5.jpg',
       title: 'Dementia Care',
       rating: 4.9,
@@ -88,6 +93,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_6',
       imageUrl: 'assets/images/image6.jpg',
       title: 'Post-Surgery Care',
       rating: 4.6,
@@ -103,6 +109,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_7',
       imageUrl: 'assets/images/image1.jpg',
       title: 'Palliative Care',
       rating: 4.8,
@@ -118,6 +125,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_8',
       imageUrl: 'assets/images/image2.jpg',
       title: 'Physical Therapy Assistant',
       rating: 4.4,
@@ -133,6 +141,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_9',
       imageUrl: 'assets/images/image3.jpg',
       title: 'Mental Health Support',
       rating: 4.7,
@@ -148,6 +157,7 @@ class _BookmarkedPageState extends State<BookmarkedPage> {
       ],
     ),
     ServiceModel(
+      id: 'bookmark_10',
       imageUrl: 'assets/images/image4.jpg',
       title: 'Pediatric Home Care',
       rating: 4.9,

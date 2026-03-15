@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:homecarecrm/screens/Menu/reviews_page/write_review_page.dart';
+import 'package:homecarecrm/services/review_service.dart';
 
-class ReviewScreen extends StatelessWidget {
+class ReviewScreen extends StatefulWidget {
   const ReviewScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ReviewScreen> createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends State<ReviewScreen> {
+  final ReviewService _reviewService = ReviewService();
 
   @override
   Widget build(BuildContext context) {
@@ -91,14 +100,6 @@ class ReviewScreen extends StatelessWidget {
                               );
                             }),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'based on 23 Reviews',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF757575),
-                            ),
-                          ),
                           const SizedBox(height: 16),
                           // Rating bars
                           Padding(
@@ -123,53 +124,65 @@ class ReviewScreen extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
-                    // Review Cards
-                    _buildReviewCard(
-                      name: 'James Andre',
-                      rating: 4.3,
-                      daysAgo: '1 day ago',
-                      review: 'The Grocery App has significantly enhanced our grocery shopping experience, providing seamless access to a wide variety of products and reliable delivery options. Its user-friendly interface simplifies the process of finding, ordering, and managing groceries, ensuring a consistently smooth and convenient experience. We highly recommend this app for its effectiveness in fostering a better shopping experience and connection with reliable suppliers.',
-                      avatarUrl: 'https://i.pravatar.cc/150?img=1',
-                    ),
+                    // Dynamic Reviews Section
+                    StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: _reviewService.getAllReviews(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
 
-                    const SizedBox(height: 12),
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text(
+                              'Error loading reviews: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          );
+                        }
 
-                    _buildReviewCard(
-                      name: 'Powell Sumuled',
-                      rating: 3.3,
-                      daysAgo: '4 day ago',
-                      review: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin eu lorem ut quam hendrerit rutrum. Nullam tristique consequat tortor, id sagittis nisl faucibus a. In hac habitasse platea dictumst. Mauris at purus et elit consequat laoreet non ac odio.',
-                      avatarUrl: 'https://i.pravatar.cc/150?img=2',
-                    ),
+                        final reviews = snapshot.data ?? [];
 
-                    const SizedBox(height: 10),
+                        if (reviews.isEmpty) {
+                          return const Center(
+                            child: Column(
+                              children: [
+                                SizedBox(height: 40),
+                                Icon(
+                                  Icons.rate_review_outlined,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No reviews yet',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Be the first to write a review!',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-                    _buildReviewCard(
-                      name: 'Hales Andreeed',
-                      rating: 5.3,
-                      daysAgo: '7 day ago',
-                      review: 'Integer eu neque a justo sagittis posuere. Morbi nec dolor nec nulla dictum fermentum. Quisque accumsan, sapien id congue lobortis, dui ante sodales quam, eu placerat quam turpis nec magna.',
-                      avatarUrl: 'https://i.pravatar.cc/150?img=3',
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    _buildReviewCard(
-                      name: 'Guptel Stin',
-                      rating: 2.3,
-                      daysAgo: '8 day ago',
-                      review: 'Suspendisse potenti. Aenean eu nibh nec lectus congue efficitur vel ac lacus. Sed non lobortis erat, et aliquet justo. Nam a suscipit lorem.',
-                      avatarUrl: 'https://i.pravatar.cc/150?img=4',
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    _buildReviewCard(
-                      name: 'Andre',
-                      rating: 4.3,
-                      daysAgo: '6 day ago',
-                      review: 'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Quisque euismod convallis leo, non tempor tortor consectetur sed. Curabitur vel vestibulum eros.',
-                      avatarUrl: 'https://i.pravatar.cc/150?img=5',
+                        return Column(
+                          children: reviews.map((review) {
+                            return _buildReviewContainer(review);
+                          }).toList(),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 70),
@@ -355,5 +368,101 @@ class ReviewScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildReviewContainer(Map<String, dynamic> review) {
+    final userName = review['userName'] as String? ?? 'Anonymous User';
+    final reviewText = review['reviewText'] as String? ?? '';
+    final createdAt = review['createdAt'] as Timestamp?;
+
+    String formattedDate = '';
+    if (createdAt != null) {
+      final date = createdAt.toDate();
+      formattedDate = '${date.day} ${_getMonthName(date.month)} ${date.year}';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Profile Icon
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2196F3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              // User Name and Date
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF212121),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF757575),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Review Text
+          Text(
+            reviewText,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF424242),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getMonthName(int month) {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[month - 1];
   }
 }
