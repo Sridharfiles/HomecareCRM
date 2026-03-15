@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:homecarecrm/screens/Menu/messages_page/messages_page.dart';
 import 'package:homecarecrm/screens/Menu/topcaregivers_page/caregiver_details_page.dart';
 
@@ -64,7 +65,6 @@ class CaregiverCard extends StatelessWidget {
               backgroundImage: NetworkImage(caregiver.image),
             ),
             const SizedBox(width: 10), // Reduced from 12
-            
             // Middle Section - Caregiver Info
             Expanded(
               child: Column(
@@ -80,7 +80,6 @@ class CaregiverCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3), // Reduced from 4
-                  
                   // Rating
                   Row(
                     children: [
@@ -100,7 +99,6 @@ class CaregiverCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4), // Reduced from 6
-                  
                   // Location
                   Row(
                     children: [
@@ -125,9 +123,8 @@ class CaregiverCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(width: 10), // Reduced from 12
-            
             // Right Section - Price and Action Buttons
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -142,7 +139,6 @@ class CaregiverCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8), // Reduced from 12
-                
                 // Action Buttons
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -172,16 +168,25 @@ class CaregiverCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8), // Reduced from 10
-                    
                     // Call Button
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MessagesPage(),
-                          ),
+                      onTap: () async {
+                        final Uri phoneUri = Uri(
+                          scheme: 'tel',
+                          path: '9342583009',
                         );
+                        if (await canLaunchUrl(phoneUri)) {
+                          await launchUrl(phoneUri);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not launch phone dialer'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
                       child: Container(
                         width: 32, // Reduced from 36
