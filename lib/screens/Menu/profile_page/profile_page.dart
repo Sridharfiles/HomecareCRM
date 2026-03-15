@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/Menu/profile_page/address_book_page.dart';
 import 'package:homecarecrm/screens/Menu/profile_page/change_password_page.dart';
 import 'package:homecarecrm/screens/Menu/profile_page/edit_profile_page.dart';
-import 'package:homecarecrm/screens/Menu/profile_page/my_orders_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -105,20 +104,6 @@ class ProfilePage extends StatelessWidget {
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
-                    _buildMenuItem(
-                      icon: Icons.receipt_long,
-                      iconColor: const Color(0xFFFFA726),
-                      title: 'My Orders',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const MyOrdersPage(),
-                          ),
-                        );
-                      },
-                    ),
                     const SizedBox(height: 20),
                     Container(
                       height: 1,
@@ -173,11 +158,7 @@ class ProfilePage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            Icon(icon, color: iconColor, size: 24),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -189,11 +170,7 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFFFA726),
-              size: 24,
-            ),
+            const Icon(Icons.chevron_right, color: Color(0xFFFFA726), size: 24),
           ],
         ),
       ),
