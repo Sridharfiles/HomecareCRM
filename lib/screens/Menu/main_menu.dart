@@ -114,11 +114,11 @@ class _SlideDrawerState extends State<SlideDrawer> {
                     Navigator.pop(context);
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.check_box,
-                  title: 'Booking',
-                  onTap: () {},
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.check_box,
+                //   title: 'Booking',
+                //   onTap: () {},
+                // ),
                 _buildMenuItem(
                   icon: Icons.star,
                   title: 'TopCaregivers',
@@ -131,18 +131,18 @@ class _SlideDrawerState extends State<SlideDrawer> {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.monitor_heart,
-                  title: 'HealthMonitoring',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HealthMonitoringPage(),
-                      ),
-                    );
-                  },
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.monitor_heart,
+                //   title: 'HealthMonitoring',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const HealthMonitoringPage(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 _buildMenuItem(
                   icon: Icons.history,
                   title: 'History',
@@ -155,80 +155,80 @@ class _SlideDrawerState extends State<SlideDrawer> {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.calendar_today,
-                  title: 'TaskSchedule',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const TaskScheduleManagementScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.check_circle_outline,
-                  title: 'ScreeningTest',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ScreeningTestScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.article,
-                  title: 'Prescriptions',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const DocumentsPrescriptionsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.medical_services,
-                  title: 'Medication',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MedicationScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.access_time,
-                  title: 'Availability',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AvailabilityScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.bar_chart,
-                  title: 'Analytics',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AnalyticsScreen(),
-                      ),
-                    );
-                  },
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.calendar_today,
+                //   title: 'TaskSchedule',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder:
+                //             (context) => const TaskScheduleManagementScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.check_circle_outline,
+                //   title: 'ScreeningTest',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const ScreeningTestScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.article,
+                //   title: 'Prescriptions',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder:
+                //             (context) => const DocumentsPrescriptionsScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.medical_services,
+                //   title: 'Medication',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const MedicationScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.access_time,
+                //   title: 'Availability',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const AvailabilityScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.bar_chart,
+                //   title: 'Analytics',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const AnalyticsScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 _buildMenuItem(
                   icon: Icons.favorite,
                   title: 'Favorite',
@@ -275,42 +275,42 @@ class _SlideDrawerState extends State<SlideDrawer> {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  icon: Icons.monetization_on,
-                  title: 'Earnings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EarningsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.subscriptions,
-                  title: 'Subscriptions',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SubscriptionPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.wallet,
-                  title: 'Wallet',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WalletPage(),
-                      ),
-                    );
-                  },
-                ),
+                // _buildMenuItem(
+                //   icon: Icons.monetization_on,
+                //   title: 'Earnings',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const EarningsPage(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.subscriptions,
+                //   title: 'Subscriptions',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const SubscriptionPage(),
+                //       ),
+                //     );
+                //   },
+                // ),
+                // _buildMenuItem(
+                //   icon: Icons.wallet,
+                //   title: 'Wallet',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => const WalletPage(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 _buildMenuItem(
                   icon: Icons.message,
                   title: 'Messages',

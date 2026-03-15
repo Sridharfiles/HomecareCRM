@@ -621,19 +621,41 @@ class _PaymentScreenState extends State<PaymentScreen> {
           bookingId: transactionId,
         );
       } else if (selectedPaymentMethod == 'upi') {
-        // For UPI, first launch the UPI app
-        final upiLaunched = await _paymentService.initiateUpiPayment(
+        // For UPI, first validate amount and launch the UPI app
+        final upiResult = await _paymentService.initiateUpiPayment(
           amount: total.toStringAsFixed(2),
         );
 
         if (!mounted) return;
 
-        if (!upiLaunched) {
-          _showError('Failed to launch UPI app. Please try again.');
+        // Handle different error types
+        if (!upiResult['success']) {
+          final errorType = upiResult['errorType'] ?? 'UNKNOWN_ERROR';
+          
           setState(() {
             _isProcessing = false;
           });
+
+          // Show specific error dialog based on error type
+          if (errorType == 'AMOUNT_EXCEEDS_LIMIT') {
+            await _showAmountErrorDialog(upiResult);
+          } else if (errorType == 'NO_UPI_APP') {
+            await _showNoUpiAppDialog(upiResult);
+          } else {
+            _showError(upiResult['message'] ?? 'UPI payment initiation failed');
+          }
           return;
+        }
+
+        // Show warning if amount is close to limit
+        if (upiResult['isWarning'] == true) {
+          bool continuePayment = await _showAmountWarningDialog(upiResult['warning']);
+          if (!continuePayment) {
+            setState(() {
+              _isProcessing = false;
+            });
+            return;
+          }
         }
 
         // Ask user to confirm payment completion
@@ -724,6 +746,138 @@ class _PaymentScreenState extends State<PaymentScreen> {
         );
       },
     ) ?? false;
+  }
+
+  /// Dialog for amount exceeding UPI limit
+  Future<void> _showAmountErrorDialog(Map<String, dynamic> errorData) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Payment Amount Too High'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(errorData['message']),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Your UPI Limit:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text('₹${errorData['maxLimit']}'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Dialog for warning when amount is close to limit
+  Future<bool> _showAmountWarningDialog(String warning) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Payment Amount Warning'),
+          content: Text(warning),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFA000),
+              ),
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
+  }
+
+  /// Dialog when no UPI app is installed
+  Future<void> _showNoUpiAppDialog(Map<String, dynamic> errorData) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('No UPI App Found'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Please install one of these UPI payment apps:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _buildUpiAppOption('Google Pay', '10M+'),
+                _buildUpiAppOption('PhonePe', '50M+'),
+                _buildUpiAppOption('BHIM', '5M+'),
+                _buildUpiAppOption('Amazon Pay', '10M+'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildUpiAppOption(String appName, String downloads) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.app_registration, color: Color(0xFF1E88E5)),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                appName,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                downloads,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _showError(String message) {

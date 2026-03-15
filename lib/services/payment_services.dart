@@ -11,6 +11,22 @@ class PaymentService {
   static const double BASE_PRICE = 0.0; // in rupees (INR) - Subtotal is 0 for UPI testing
   static const double DELIVERY_FEE = 1.0; // Fixed delivery fee for testing (in INR for UPI)
 
+  // UPI Transaction Limits (per bank/app - in Rupees)
+  // These are typical limits. Actual limits may vary by bank
+  static const Map<String, double> UPI_BANK_LIMITS = {
+    'ICICI': 100000.0,  // ₹1,00,000
+    'HDFC': 100000.0,
+    'SBI': 100000.0,
+    'Axis': 100000.0,
+    'GOOGLE_PAY': 100000.0,
+    'PHONEPE': 100000.0,
+    'BHIM': 100000.0,
+    'AMAZON_PAY': 50000.0,  // Amazon Pay typically has lower limits
+  };
+  
+  static const double DEFAULT_UPI_LIMIT = 100000.0;
+  static const double RECOMMENDED_RETRY_AMOUNT = 50000.0;
+
   // References to collections
   CollectionReference get paymentsCollection =>
       _firestore.collection('payments');
@@ -76,13 +92,62 @@ class PaymentService {
     }
   }
 
+  /// Validate UPI amount against bank limits
+  /// Returns validation result with detailed error message if amount exceeds limit
+  Map<String, dynamic> validateUPIAmount(double amount) {
+    // Check if amount exceeds default UPI limit
+    if (amount > DEFAULT_UPI_LIMIT) {
+      return {
+        'isValid': false,
+        'errorType': 'AMOUNT_EXCEEDS_LIMIT',
+        'message': 'Payment amount ₹$amount exceeds maximum UPI limit of ₹$DEFAULT_UPI_LIMIT.\n\n'
+            'Solutions:\n'
+            '1. Contact your bank to increase your UPI limit\n'
+            '2. Split payment into multiple transactions\n'
+            '3. Use an alternative payment method (PayPal/Credit Card)',
+        'maxLimit': DEFAULT_UPI_LIMIT,
+        'recommendedAmount': RECOMMENDED_RETRY_AMOUNT,
+      };
+    }
+    
+    // Warn if amount is close to limit (above 80% of limit)
+    if (amount > DEFAULT_UPI_LIMIT * 0.8) {
+      return {
+        'isValid': true,
+        'isWarning': true,
+        'warning': 'Payment amount ₹$amount is close to your UPI transaction limit.\n'
+            'If payment fails, try a smaller amount or use alternative payment method.',
+        'maxLimit': DEFAULT_UPI_LIMIT,
+      };
+    }
+    
+    return {
+      'isValid': true,
+      'isWarning': false,
+    };
+  }
+
   /// Initiate actual UPI transaction using url_launcher with UPI deep links
-  Future<bool> initiateUpiPayment({
+  /// Now includes amount validation and better error reporting
+  Future<Map<String, dynamic>> initiateUpiPayment({
     required String amount,
     String? userUpiId,
   }) async {
     try {
-      // Build UPI URL as raw string to avoid encoding issues
+      final amountDouble = double.parse(amount);
+      
+      // Validate amount against UPI limits
+      final validation = validateUPIAmount(amountDouble);
+      if (!validation['isValid']) {
+        return {
+          'success': false,
+          'errorType': validation['errorType'],
+          'message': validation['message'],
+          'maxLimit': validation['maxLimit'],
+        };
+      }
+
+      // Build UPI URL with validated amount
       final txnRef = 'TXN_${DateTime.now().millisecondsSinceEpoch}';
       final upiUrl = Uri.parse(
         'upi://pay?pa=$MERCHANT_UPI_ID'
@@ -94,7 +159,7 @@ class PaymentService {
         '&tr=$txnRef',
       );
 
-      // Launch UPI app directly - canLaunchUrl is unreliable for custom schemes
+      // Launch UPI app directly
       try {
         final launched = await launchUrl(
           upiUrl,
@@ -102,18 +167,48 @@ class PaymentService {
         );
 
         if (!launched) {
-          print('Failed to launch UPI app');
-          return false;
+          return {
+            'success': false,
+            'errorType': 'NO_UPI_APP',
+            'message': 'No UPI app found on your device.\n\n'
+                'Please install:\n'
+                '• Google Pay\n'
+                '• PhonePe\n'
+                '• BHIM\n'
+                '• Amazon Pay\n'
+                '• Your bank\'s UPI app',
+          };
         }
 
-        return true;
+        // Return warning if amount was close to limit
+        if (validation['isWarning'] == true) {
+          return {
+            'success': true,
+            'warning': validation['warning'],
+            'transactionRef': txnRef,
+          };
+        }
+
+        return {
+          'success': true,
+          'transactionRef': txnRef,
+        };
       } catch (launchError) {
         print('Launch error: $launchError');
-        return false;
+        return {
+          'success': false,
+          'errorType': 'LAUNCH_FAILED',
+          'message': 'Failed to launch UPI app: ${launchError.toString()}\n\n'
+              'Try installing a UPI payment app (Google Pay, PhonePe, etc.)',
+        };
       }
     } catch (e) {
       print('UPI Error: $e');
-      return false;
+      return {
+        'success': false,
+        'errorType': 'UNKNOWN_ERROR',
+        'message': 'An error occurred: ${e.toString()}',
+      };
     }
   }
 
@@ -281,11 +376,6 @@ class PaymentService {
   }
 
   // Validation Methods
-  bool _isValidUPI(String upi) {
-    final upiRegex = RegExp(r'^[a-zA-Z0-9._-]+@[a-zA-Z]+$');
-    return upiRegex.hasMatch(upi);
-  }
-
   bool _isValidCardNumber(String cardNumber) {
     final cleanedNumber = cardNumber.replaceAll(' ', '');
     return cleanedNumber.length >= 13 && cleanedNumber.length <= 19;
