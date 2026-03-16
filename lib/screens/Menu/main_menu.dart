@@ -57,18 +57,24 @@ class _SlideDrawerState extends State<SlideDrawer> {
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
-                    image: _googleSignInService.getUserPhotoUrl() != null
-                        ? DecorationImage(
-                            image: NetworkImage(
-                              _googleSignInService.getUserPhotoUrl()!,
-                            ),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+                    image:
+                        _googleSignInService.getUserPhotoUrl() != null
+                            ? DecorationImage(
+                              image: NetworkImage(
+                                _googleSignInService.getUserPhotoUrl()!,
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                            : null,
                   ),
-                  child: _googleSignInService.getUserPhotoUrl() == null
-                      ? Icon(Icons.person, size: 35, color: Colors.grey[600])
-                      : null,
+                  child:
+                      _googleSignInService.getUserPhotoUrl() == null
+                          ? Icon(
+                            Icons.person,
+                            size: 35,
+                            color: Colors.grey[600],
+                          )
+                          : null,
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -114,11 +120,6 @@ class _SlideDrawerState extends State<SlideDrawer> {
                     Navigator.pop(context);
                   },
                 ),
-                // _buildMenuItem(
-                //   icon: Icons.check_box,
-                //   title: 'Booking',
-                //   onTap: () {},
-                // ),
                 _buildMenuItem(
                   icon: Icons.star,
                   title: 'TopCaregivers',
@@ -335,7 +336,7 @@ class _SlideDrawerState extends State<SlideDrawer> {
                 ),
                 _buildMenuItem(
                   icon: Icons.reviews,
-                  title: 'Reviwes',
+                  title: 'Reviews',
                   onTap: () {
                     Navigator.push(
                       context,
@@ -376,7 +377,9 @@ class _SlideDrawerState extends State<SlideDrawer> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Log Out'),
-                          content: const Text('Are you sure you want to log out?'),
+                          content: const Text(
+                            'Are you sure you want to log out?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),

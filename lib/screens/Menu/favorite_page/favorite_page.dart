@@ -273,6 +273,7 @@ class FavoriteCaregiverCard extends StatelessWidget {
               builder:
                   (context) => BookPage(
                     service: ServiceModel(
+                      id: caregiver['id'] ?? caregiver['name'] ?? 'unknown',
                       imageUrl:
                           caregiver['imageUrl']?.startsWith('http') == true
                               ? caregiver['imageUrl']
@@ -292,12 +293,7 @@ class FavoriteCaregiverCard extends StatelessWidget {
                           'Professional caregiver service providing quality care and support.',
                       features:
                           caregiver['features'] ??
-                          [
-                            'Experienced and trained caregiver',
-                            'Background verified',
-                            'Compassionate and reliable',
-                            'Flexible scheduling',
-                          ],
+                          ['Professional Care', 'Background Checked'],
                     ),
                   ),
             ),

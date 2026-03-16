@@ -16,6 +16,8 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _streetController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _districtController = TextEditingController();
   final TextEditingController _pincodeController = TextEditingController();
@@ -43,9 +45,9 @@ class _EditProfileState extends State<EditProfile> {
   Future<void> _loadUserData() async {
     try {
       // Get Google profile data first
-      Map<String, dynamic>? googleProfile = 
+      Map<String, dynamic>? googleProfile =
           await _userService.getGoogleProfileData();
-      
+
       if (googleProfile != null) {
         _userProfilePicture = googleProfile['profilePicture'];
       }
@@ -59,12 +61,14 @@ class _EditProfileState extends State<EditProfile> {
 
       // Fetch user details from Firestore
       Map<String, dynamic>? userData = await _userService.fetchUserDetails();
-      
+
       if (userData != null) {
         setState(() {
           _firstNameController.text = userData['firstName'] ?? '';
           _lastNameController.text = userData['lastName'] ?? '';
           _phoneController.text = userData['phoneNumber'] ?? '';
+          _streetController.text = userData['streetAddress'] ?? '';
+          _cityController.text = userData['city'] ?? '';
           _stateController.text = userData['state'] ?? '';
           _districtController.text = userData['district'] ?? '';
           _pincodeController.text = userData['pincode'] ?? '';
@@ -72,15 +76,18 @@ class _EditProfileState extends State<EditProfile> {
           _selectedCountryCode = userData['countryCode'];
           _selectedState = userData['state'];
           _selectedDistrict = userData['district'];
-          
+
           // Populate available states for selected country
           if (_selectedCountry != null) {
             _availableStates = getStatesForCountry(_selectedCountry!);
             if (_selectedState != null) {
-              _availableDistricts = getDistrictsForState(_selectedCountry!, _selectedState!);
+              _availableDistricts = getDistrictsForState(
+                _selectedCountry!,
+                _selectedState!,
+              );
             }
           }
-          
+
           // Set display name
           String firstName = userData['firstName'] ?? '';
           String lastName = userData['lastName'] ?? '';
@@ -140,7 +147,10 @@ class _EditProfileState extends State<EditProfile> {
         _selectedState = stateName;
         _selectedDistrict = null;
         _districtController.clear();
-        _availableDistricts = getDistrictsForState(_selectedCountry!, stateName);
+        _availableDistricts = getDistrictsForState(
+          _selectedCountry!,
+          stateName,
+        );
       });
     }
   }
@@ -160,6 +170,8 @@ class _EditProfileState extends State<EditProfile> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _streetController.dispose();
+    _cityController.dispose();
     _stateController.dispose();
     _districtController.dispose();
     _pincodeController.dispose();
@@ -203,185 +215,231 @@ class _EditProfileState extends State<EditProfile> {
               onPressed: () {},
               child: const Text(
                 'Edit',
-                style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 15,
-                ),
+                style: TextStyle(color: Colors.blue, fontSize: 15),
               ),
             ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // Profile Picture
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[300],
-                        border: Border.all(color: Colors.grey[400]!, width: 1),
-                      ),
-                      child: _userProfilePicture != null
-                          ? ClipOval(
-                              child: Image.network(
-                                _userProfilePicture!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(Icons.person, size: 40, color: Colors.grey[600]);
-                                },
-                              ),
-                            )
-                          : Icon(Icons.person, size: 40, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Name
-                    Text(
-                      _userName ?? 'User Name',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Email
-                    Text(
-                      _userEmail ?? 'email@example.com',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Input Fields
-                    _buildInputField(_firstNameController, Icons.person_outline, 'First Name'),
-                    const SizedBox(height: 12),
-                    _buildInputField(_lastNameController, Icons.person_outline, 'Last Name'),
-                    const SizedBox(height: 12),
-                    _buildInputField(
-                      _emailController,
-                      Icons.email_outlined,
-                      'Email Address',
-                      keyboardType: TextInputType.emailAddress,
-                      readOnly: true,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Country Dropdown
-                    _buildCountryDropdown(),
-                    const SizedBox(height: 12),
-
-                    // Phone Number with Country Code Prefix
-                    Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        children: [
-                          // Country Code Prefix
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              _selectedCountryCode ?? '+0',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue[700],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 30,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Profile Picture
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[300],
+                          border: Border.all(
+                            color: Colors.grey[400]!,
                             width: 1,
-                            color: Colors.grey[300],
                           ),
-                          // Phone Number Input
-                          Expanded(
-                            child: TextField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              style: const TextStyle(fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: 'Enter phone number',
-                                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-                                prefixIcon: Icon(Icons.phone_outlined, color: Colors.grey[600], size: 20),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // State Dropdown
-                    _buildStateDropdown(),
-                    const SizedBox(height: 12),
-
-                    // District Dropdown
-                    _buildDistrictDropdown(),
-                    const SizedBox(height: 12),
-                    
-                    _buildInputField(
-                      _pincodeController,
-                      Icons.markunread_mailbox_outlined,
-                      'Pincode',
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _saveUserInformation,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          disabledBackgroundColor: Colors.grey,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
                         ),
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  strokeWidth: 2,
+                        child:
+                            _userProfilePicture != null
+                                ? ClipOval(
+                                  child: Image.network(
+                                    _userProfilePicture!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: Colors.grey[600],
+                                      );
+                                    },
+                                  ),
+                                )
+                                : Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: Colors.grey[600],
                                 ),
-                              )
-                            : const Text(
-                                'Save Information',
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Name
+                      Text(
+                        _userName ?? 'User Name',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Email
+                      Text(
+                        _userEmail ?? 'email@example.com',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Input Fields
+                      _buildInputField(
+                        _firstNameController,
+                        Icons.person_outline,
+                        'First Name',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInputField(
+                        _lastNameController,
+                        Icons.person_outline,
+                        'Last Name',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInputField(
+                        _emailController,
+                        Icons.email_outlined,
+                        'Email Address',
+                        keyboardType: TextInputType.emailAddress,
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Street Address
+                      _buildInputField(
+                        _streetController,
+                        Icons.home_outlined,
+                        'Street Address',
+                      ),
+                      const SizedBox(height: 12),
+
+                      // City
+                      _buildInputField(
+                        _cityController,
+                        Icons.location_city_outlined,
+                        'City',
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Country Dropdown
+                      _buildCountryDropdown(),
+                      const SizedBox(height: 12),
+
+                      // Phone Number with Country Code Prefix
+                      Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          children: [
+                            // Country Code Prefix
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                _selectedCountryCode ?? '+0',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue[700],
                                 ),
                               ),
+                            ),
+                            Container(
+                              height: 30,
+                              width: 1,
+                              color: Colors.grey[300],
+                            ),
+                            // Phone Number Input
+                            Expanded(
+                              child: TextField(
+                                controller: _phoneController,
+                                keyboardType: TextInputType.phone,
+                                style: const TextStyle(fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter phone number',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.phone_outlined,
+                                    color: Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 12),
+
+                      // State Dropdown
+                      _buildStateDropdown(),
+                      const SizedBox(height: 12),
+
+                      // District Dropdown
+                      _buildDistrictDropdown(),
+                      const SizedBox(height: 12),
+
+                      _buildInputField(
+                        _pincodeController,
+                        Icons.markunread_mailbox_outlined,
+                        'Pincode',
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Save Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _isSaving ? null : _saveUserInformation,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            disabledBackgroundColor: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          child:
+                              _isSaving
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text(
+                                    'Save Information',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -408,12 +466,13 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ],
         ),
-        items: countryList.map<DropdownMenuItem<String>>((CountryData country) {
-          return DropdownMenuItem<String>(
-            value: country.name,
-            child: Text(country.name, style: const TextStyle(fontSize: 14)),
-          );
-        }).toList(),
+        items:
+            countryList.map<DropdownMenuItem<String>>((CountryData country) {
+              return DropdownMenuItem<String>(
+                value: country.name,
+                child: Text(country.name, style: const TextStyle(fontSize: 14)),
+              );
+            }).toList(),
         onChanged: _onCountrySelected,
         style: const TextStyle(fontSize: 14, color: Colors.black),
         icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
@@ -444,12 +503,13 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ],
         ),
-        items: _availableStates.map<DropdownMenuItem<String>>((String state) {
-          return DropdownMenuItem<String>(
-            value: state,
-            child: Text(state, style: const TextStyle(fontSize: 14)),
-          );
-        }).toList(),
+        items:
+            _availableStates.map<DropdownMenuItem<String>>((String state) {
+              return DropdownMenuItem<String>(
+                value: state,
+                child: Text(state, style: const TextStyle(fontSize: 14)),
+              );
+            }).toList(),
         onChanged: _selectedCountry != null ? _onStateSelected : null,
         style: const TextStyle(fontSize: 14, color: Colors.black),
         icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
@@ -490,12 +550,15 @@ class _EditProfileState extends State<EditProfile> {
             ),
           ],
         ),
-        items: _availableDistricts.map<DropdownMenuItem<String>>((String district) {
-          return DropdownMenuItem<String>(
-            value: district,
-            child: Text(district, style: const TextStyle(fontSize: 14)),
-          );
-        }).toList(),
+        items:
+            _availableDistricts.map<DropdownMenuItem<String>>((
+              String district,
+            ) {
+              return DropdownMenuItem<String>(
+                value: district,
+                child: Text(district, style: const TextStyle(fontSize: 14)),
+              );
+            }).toList(),
         onChanged: _selectedState != null ? _onDistrictSelected : null,
         style: const TextStyle(fontSize: 14, color: Colors.black),
         icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
@@ -537,43 +600,16 @@ class _EditProfileState extends State<EditProfile> {
           hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
           prefixIcon: Icon(icon, color: Colors.grey[600], size: 20),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ),
         ),
       ),
     );
   }
 
   Future<void> _saveUserInformation() async {
-    if (_selectedCountry == null || _selectedCountryCode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a country'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (_selectedState == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a state'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (_selectedDistrict == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a district'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     if (_firstNameController.text.isEmpty || _lastNameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -592,13 +628,13 @@ class _EditProfileState extends State<EditProfile> {
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
-        streetAddress: '',
-        city: '',
-        state: _selectedState!,
+        streetAddress: _streetController.text.trim(),
+        city: _cityController.text.trim(),
+        state: _selectedState ?? '',
         zipCode: _pincodeController.text.trim(),
-        country: _selectedCountry!,
-        countryCode: _selectedCountryCode!,
-        district: _selectedDistrict!,
+        country: _selectedCountry ?? '',
+        countryCode: _selectedCountryCode ?? '',
+        district: _selectedDistrict ?? '',
       );
 
       if (mounted) {
