@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/home_page/service_card.dart';
+import 'package:homecarecrm/services/notification_service.dart';
 
 class BookingService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   // Reference to bookings collection
   CollectionReference get bookingsCollection =>
@@ -95,6 +97,20 @@ class BookingService {
 
       // Add booking_payment record to Firestore
       await bookingsPaymentsCollection.add(bookingPaymentData);
+
+      // Create notification for booking confirmation
+      try {
+        await _notificationService.createBookingNotification(
+          type: NotificationType.bookingConfirmed,
+          bookingId: bookingId,
+          serviceTitle: service.title,
+          userName: user.displayName ?? 'User',
+        );
+        print('🔔 Booking confirmation notification created');
+      } catch (notificationError) {
+        print('⚠️ Error creating booking notification: $notificationError');
+        // Don't rethrow notification error as booking was successful
+      }
 
       return bookingId; // Return booking ID
     } catch (e) {
@@ -190,6 +206,25 @@ class BookingService {
         'bookingStatus': 'cancelled',
         'updatedAt': Timestamp.now(),
       });
+
+      // Create notification for booking cancellation
+      try {
+        final serviceTitle = booking['serviceTitle'] as String? ?? 'Service';
+        final userName = booking['userName'] as String? ?? 'User';
+
+        await _notificationService.createBookingNotification(
+          type: NotificationType.bookingCancelled,
+          bookingId: bookingId,
+          serviceTitle: serviceTitle,
+          userName: userName,
+        );
+        print('🔔 Booking cancellation notification created');
+      } catch (notificationError) {
+        print(
+          '⚠️ Error creating cancellation notification: $notificationError',
+        );
+        // Don't rethrow notification error as cancellation was successful
+      }
 
       return true;
     } catch (e) {

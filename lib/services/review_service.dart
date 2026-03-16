@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:homecarecrm/services/notification_service.dart';
 
 class ReviewService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   // Get current user ID
   String? get currentUserId => _auth.currentUser?.uid;
@@ -33,6 +35,19 @@ class ReviewService {
         'createdAt': FieldValue.serverTimestamp(),
       });
       print('Review added successfully');
+
+      // Create notification for review posted
+      try {
+        await _notificationService.createServiceNotification(
+          type: NotificationType.reviewPosted,
+          serviceId: category,
+          serviceTitle: category,
+        );
+        print('🔔 Review posted notification created');
+      } catch (notificationError) {
+        print('⚠️ Error creating review notification: $notificationError');
+        // Don't rethrow notification error as review was posted successfully
+      }
     } catch (e) {
       print('Error adding review: $e');
       rethrow;
@@ -40,13 +55,16 @@ class ReviewService {
   }
 
   // Get all reviews for a specific category
-  Future<List<Map<String, dynamic>>> getReviewsByCategory(String category) async {
+  Future<List<Map<String, dynamic>>> getReviewsByCategory(
+    String category,
+  ) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('reviews')
-          .where('category', isEqualTo: category)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('reviews')
+              .where('category', isEqualTo: category)
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -62,11 +80,12 @@ class ReviewService {
   // Get all reviews by current user
   Future<List<Map<String, dynamic>>> getUserReviews() async {
     try {
-      final querySnapshot = await _firestore
-          .collection('reviews')
-          .where('userId', isEqualTo: currentUserId)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final querySnapshot =
+          await _firestore
+              .collection('reviews')
+              .where('userId', isEqualTo: currentUserId)
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
@@ -85,11 +104,14 @@ class ReviewService {
         .collection('reviews')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                data['id'] = doc.id;
+                return data;
+              }).toList(),
+        );
   }
 
   // Delete a review
@@ -110,11 +132,14 @@ class ReviewService {
         .where('category', isEqualTo: category)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                data['id'] = doc.id;
+                return data;
+              }).toList(),
+        );
   }
 
   // Stream reviews by current user (real-time updates)
@@ -124,10 +149,13 @@ class ReviewService {
         .where('userId', isEqualTo: currentUserId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                data['id'] = doc.id;
+                return data;
+              }).toList(),
+        );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homecarecrm/services/notification_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({Key? key}) : super(key: key);
@@ -8,225 +9,56 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  int unreadCount = 2;
-  List<NotificationItem> notifications = [
-    NotificationItem(
-      id: '1',
-      icon: Icons.check_circle,
-      iconColor: Colors.green,
-      iconBgColor: const Color(0xFFB8E6C3),
-      title: 'Order Confirmed',
-      message: 'Your order #12345 has been confirmed.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-    NotificationItem(
-      id: '2',
-      icon: Icons.local_shipping,
-      iconColor: Colors.blue,
-      iconBgColor: const Color(0xFFB3D9FF),
-      title: 'Order Shipped',
-      message: 'Your order #12345 has been shipped.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    NotificationItem(
-      id: '3',
-      icon: Icons.delivery_dining,
-      iconColor: Colors.orange,
-      iconBgColor: const Color(0xFFFFD9A3),
-      title: 'Out for Delivery',
-      message: 'Your order #12345 is out for delivery.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    NotificationItem(
-      id: '4',
-      icon: Icons.home,
-      iconColor: Colors.purple,
-      iconBgColor: const Color(0xFFE0C6F5),
-      title: 'Order Delivered',
-      message: 'Your order #12345 has been delivered.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-    ),
-    NotificationItem(
-      id: '5',
-      icon: Icons.cancel,
-      iconColor: Colors.red,
-      iconBgColor: const Color(0xFFFFB3B3),
-      title: 'Order Cancelled',
-      message: 'Your order #12345 has been cancelled.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 4)),
-    ),
-    NotificationItem(
-      id: '6',
-      icon: Icons.credit_card,
-      iconColor: Colors.teal,
-      iconBgColor: const Color(0xFFB3E5E0),
-      title: 'Payment Received',
-      message: 'Your payment for order #12345 has been received.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    NotificationItem(
-      id: '7',
-      icon: Icons.refresh,
-      iconColor: Colors.orange,
-      iconBgColor: const Color(0xFFFFE8B3),
-      title: 'Order Update',
-      message: 'Your order #12345 has been updated.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 6)),
-    ),
-    NotificationItem(
-      id: '8',
-      icon: Icons.support_agent,
-      iconColor: Colors.brown,
-      iconBgColor: const Color(0xFFD9C4B0),
-      title: 'Customer Support',
-      message: 'Customer support has responded to your query.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 7)),
-    ),
-    NotificationItem(
-      id: '9',
-      icon: Icons.notifications,
-      iconColor: Colors.blue,
-      iconBgColor: const Color(0xFFC6D9F5),
-      title: 'New Promotion',
-      message: 'Check out our new promotion on fresh produce!',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 8)),
-    ),
-    NotificationItem(
-      id: '10',
-      icon: Icons.star,
-      iconColor: Colors.orange,
-      iconBgColor: const Color(0xFFFFE8B3),
-      title: 'Rate Us',
-      message: 'Please rate your recent purchase experience.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 9)),
-    ),
-    NotificationItem(
-      id: '11',
-      icon: Icons.shopping_cart,
-      iconColor: Colors.green,
-      iconBgColor: const Color(0xFFC6F5D9),
-      title: 'Cart Reminder',
-      message: 'You have items in your cart. Don\'t forget to checkout!',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 10)),
-    ),
-    NotificationItem(
-      id: '12',
-      icon: Icons.new_releases,
-      iconColor: Colors.blue,
-      iconBgColor: const Color(0xFFB3D9FF),
-      title: 'New Arrivals',
-      message: 'Check out the new arrivals in our store.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 11)),
-    ),
-    NotificationItem(
-      id: '13',
-      icon: Icons.error,
-      iconColor: Colors.red,
-      iconBgColor: const Color(0xFFFFB3B3),
-      title: 'Payment Failed',
-      message: 'Your payment for order #12345 failed. Please try again.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 12)),
-    ),
-    NotificationItem(
-      id: '14',
-      icon: Icons.card_giftcard,
-      iconColor: Colors.purple,
-      iconBgColor: const Color(0xFFE0C6F5),
-      title: 'Gift Card Added',
-      message: 'A new gift card has been added to your account.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 13)),
-    ),
-    NotificationItem(
-      id: '15',
-      icon: Icons.store,
-      iconColor: Colors.orange,
-      iconBgColor: const Color(0xFFFFD9A3),
-      title: 'Store Update',
-      message: 'Our store timings have been updated.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 14)),
-    ),
-    NotificationItem(
-      id: '16',
-      icon: Icons.feedback,
-      iconColor: Colors.teal,
-      iconBgColor: const Color(0xFFB3E5E0),
-      title: 'Feedback Request',
-      message: 'We would love to hear your feedback on our service.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 15)),
-    ),
-    NotificationItem(
-      id: '17',
-      icon: Icons.local_offer,
-      iconColor: Colors.yellow,
-      iconBgColor: const Color(0xFFFFF9B3),
-      title: 'Special Offer',
-      message: 'Don\'t miss our special offer on organic produce!',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 16)),
-    ),
-    NotificationItem(
-      id: '18',
-      icon: Icons.warning,
-      iconColor: Colors.brown,
-      iconBgColor: const Color(0xFFD9C4B0),
-      title: 'Stock Alert',
-      message: 'An item in your wishlist is back in stock.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 17)),
-    ),
-    NotificationItem(
-      id: '19',
-      icon: Icons.verified,
-      iconColor: Colors.blue,
-      iconBgColor: const Color(0xFFC6D9F5),
-      title: 'Account Verified',
-      message: 'Your account has been successfully verified.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 18)),
-    ),
-    NotificationItem(
-      id: '20',
-      icon: Icons.schedule,
-      iconColor: Colors.orange,
-      iconBgColor: const Color(0xFFFFE8B3),
-      title: 'Delivery Rescheduled',
-      message: 'Your delivery for order #12345 has been rescheduled.',
-      isRead: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 19)),
-    ),
-  ];
+  int unreadCount = 0;
+  List<Map<String, dynamic>> notifications = [];
+  bool isLoading = true;
+  final NotificationService _notificationService = NotificationService();
 
-  void markAllAsRead() {
-    setState(() {
-      for (var notification in notifications) {
-        notification.isRead = true;
-      }
-      unreadCount = 0;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
   }
 
-  void toggleReadStatus(String id) {
-    setState(() {
-      final notification = notifications.firstWhere((n) => n.id == id);
-      notification.isRead = !notification.isRead;
-      unreadCount = notifications.where((n) => !n.isRead).length;
-    });
+  Future<void> _loadNotifications() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final userNotifications =
+          await _notificationService.getUserNotifications();
+      final unreadCountValue = await _notificationService.getUnreadCount();
+
+      setState(() {
+        notifications = userNotifications;
+        unreadCount = unreadCountValue;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Error loading notifications: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> markAllAsRead() async {
+    try {
+      await _notificationService.markAllAsRead();
+      _loadNotifications(); // Refresh the notifications
+    } catch (e) {
+      print('❌ Error marking all as read: $e');
+    }
+  }
+
+  Future<void> toggleReadStatus(String id) async {
+    try {
+      await _notificationService.markAsRead(id);
+      _loadNotifications(); // Refresh the notifications
+    } catch (e) {
+      print('❌ Error toggling read status: $e');
+    }
   }
 
   @override
@@ -311,17 +143,56 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                return NotificationCard(
-                  notification: notification,
-                  onTap: () => toggleReadStatus(notification.id),
-                );
-              },
-            ),
+            child:
+                isLoading
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.orange,
+                        ),
+                      ),
+                    )
+                    : notifications.isEmpty
+                    ? const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.notifications_none,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No notifications yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'We\'ll notify you when something happens',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      itemCount: notifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = notifications[index];
+                        return DynamicNotificationCard(
+                          notification: notification,
+                          onTap: () => toggleReadStatus(notification['id']),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -329,11 +200,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 }
 
-class NotificationCard extends StatelessWidget {
-  final NotificationItem notification;
+class DynamicNotificationCard extends StatelessWidget {
+  final Map<String, dynamic> notification;
   final VoidCallback onTap;
 
-  const NotificationCard({
+  const DynamicNotificationCard({
     Key? key,
     required this.notification,
     required this.onTap,
@@ -341,6 +212,15 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get notification style based on type
+    final typeString = notification['type'] as String? ?? 'orderConfirmed';
+    final notificationType = NotificationType.values.firstWhere(
+      (type) => type.name == typeString,
+      orElse: () => NotificationType.orderConfirmed,
+    );
+
+    final style = NotificationService.getNotificationStyle(notificationType);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -363,12 +243,12 @@ class NotificationCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: notification.iconBgColor,
+                color: style['iconBgColor'] as Color,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                notification.icon,
-                color: notification.iconColor,
+                style['icon'] as IconData,
+                color: style['iconColor'] as Color,
                 size: 22,
               ),
             ),
@@ -378,7 +258,7 @@ class NotificationCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    notification.title,
+                    notification['title'] as String? ?? 'Notification',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -387,7 +267,7 @@ class NotificationCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    notification.message,
+                    notification['message'] as String? ?? 'No message',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -404,7 +284,10 @@ class NotificationCard extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: notification.isRead ? Colors.transparent : Colors.red,
+                color:
+                    (notification['isRead'] as bool? ?? false)
+                        ? Colors.transparent
+                        : Colors.red,
                 shape: BoxShape.circle,
               ),
             ),
@@ -413,26 +296,4 @@ class NotificationCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class NotificationItem {
-  final String id;
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBgColor;
-  final String title;
-  final String message;
-  bool isRead;
-  final DateTime timestamp;
-
-  NotificationItem({
-    required this.id,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
-    required this.title,
-    required this.message,
-    this.isRead = false,
-    required this.timestamp,
-  });
 }

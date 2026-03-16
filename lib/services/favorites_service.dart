@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:homecarecrm/services/notification_service.dart';
 
 class FavoritesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   String? get userId => _auth.currentUser?.uid;
 
@@ -35,6 +37,19 @@ class FavoritesService {
           });
 
       print('SUCCESS: Favorite added successfully');
+
+      // Create notification for adding to favorites
+      try {
+        await _notificationService.createServiceNotification(
+          type: NotificationType.serviceAddedToFavorites,
+          serviceId: service['id'].toString(),
+          serviceTitle: service['name'] ?? 'Service',
+        );
+        print('🔔 Favorite added notification created');
+      } catch (notificationError) {
+        print('⚠️ Error creating favorite notification: $notificationError');
+        // Don't rethrow notification error as favorite was added successfully
+      }
     } catch (e) {
       print('ERROR: Failed to add favorite: $e');
       print('ERROR TYPE: ${e.runtimeType}');
