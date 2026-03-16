@@ -8,10 +8,15 @@ class BookingService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Reference to bookings collection
-  CollectionReference get bookingsCollection => _firestore.collection('bookings');
-  
+  CollectionReference get bookingsCollection =>
+      _firestore.collection('bookings');
+
   // Reference to bookings_payments collection for payment linkage
-  CollectionReference get bookingsPaymentsCollection => _firestore.collection('bookings_payments');
+  CollectionReference get bookingsPaymentsCollection =>
+      _firestore.collection('bookings_payments');
+
+  // Public getter for current user
+  User? get currentUser => _auth.currentUser;
 
   /// Create a new booking with service details
   Future<String> createBooking({
@@ -35,7 +40,8 @@ class BookingService {
       }
 
       // Format time as string
-      final hour = selectedTime.hourOfPeriod == 0 ? 12 : selectedTime.hourOfPeriod;
+      final hour =
+          selectedTime.hourOfPeriod == 0 ? 12 : selectedTime.hourOfPeriod;
       final period = selectedTime.period == DayPeriod.am ? 'AM' : 'PM';
       final minute = selectedTime.minute.toString().padLeft(2, '0');
       final formattedTime = '$hour:$minute $period';
@@ -78,7 +84,8 @@ class BookingService {
 
       // Add payment method specific details to booking_payment
       if (paymentMethod == 'paypal') {
-        if (cardHolderName != null) bookingPaymentData['cardHolderName'] = cardHolderName;
+        if (cardHolderName != null)
+          bookingPaymentData['cardHolderName'] = cardHolderName;
         if (cardNumber != null) bookingPaymentData['cardNumber'] = cardNumber;
         if (expiryDate != null) bookingPaymentData['expiryDate'] = expiryDate;
         if (cvv != null) bookingPaymentData['cvv'] = cvv;
@@ -104,16 +111,19 @@ class BookingService {
         throw Exception('User not authenticated');
       }
 
-      final query = await bookingsCollection
-          .where('userId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final query =
+          await bookingsCollection
+              .where('userId', isEqualTo: user.uid)
+              .orderBy('createdAt', descending: true)
+              .get();
 
       return query.docs
-          .map((doc) => {
-            'bookingId': doc.id,
-            ...doc.data() as Map<String, dynamic>,
-          })
+          .map(
+            (doc) => {
+              'bookingId': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            },
+          )
           .toList();
     } catch (e) {
       print('Error fetching user bookings: $e');
@@ -129,10 +139,7 @@ class BookingService {
         return null;
       }
 
-      return {
-        'bookingId': doc.id,
-        ...doc.data() as Map<String, dynamic>,
-      };
+      return {'bookingId': doc.id, ...doc.data() as Map<String, dynamic>};
     } catch (e) {
       print('Error fetching booking: $e');
       rethrow;
@@ -140,10 +147,7 @@ class BookingService {
   }
 
   /// Update booking status
-  Future<void> updateBookingStatus(
-    String bookingId,
-    String newStatus,
-  ) async {
+  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
     try {
       await bookingsCollection.doc(bookingId).update({
         'bookingStatus': newStatus,
@@ -205,12 +209,17 @@ class BookingService {
         .where('userId', isEqualTo: user.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-              'bookingId': doc.id,
-              ...doc.data() as Map<String, dynamic>,
-            })
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs
+                  .map(
+                    (doc) => {
+                      'bookingId': doc.id,
+                      ...doc.data() as Map<String, dynamic>,
+                    },
+                  )
+                  .toList(),
+        );
   }
 
   /// Get booking statistics for current user
@@ -221,9 +230,8 @@ class BookingService {
         throw Exception('User not authenticated');
       }
 
-      final bookings = await bookingsCollection
-          .where('userId', isEqualTo: user.uid)
-          .get();
+      final bookings =
+          await bookingsCollection.where('userId', isEqualTo: user.uid).get();
 
       int totalBookings = bookings.docs.length;
       int pendingBookings = 0;

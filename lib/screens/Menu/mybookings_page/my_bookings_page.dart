@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homecarecrm/screens/Menu/mybookings_page/tracking_page.dart';
+import 'package:homecarecrm/services/bookings_services.dart';
 
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({super.key});
@@ -13,6 +14,12 @@ class _MyBookingsPageState extends State<MyBookingsPage>
   late AnimationController _activeBookingsController;
   late AnimationController _completedBookingsController;
   late AnimationController _cancelledBookingsController;
+
+  List<Map<String, dynamic>> activeBookings = [];
+  List<Map<String, dynamic>> completedBookings = [];
+  List<Map<String, dynamic>> cancelledBookings = [];
+  bool isLoading = true;
+  final BookingService _bookingService = BookingService();
 
   @override
   void initState() {
@@ -33,8 +40,134 @@ class _MyBookingsPageState extends State<MyBookingsPage>
       vsync: this,
     );
 
-    // Start animations with staggered timing
-    _startAnimations();
+    _loadBookings();
+  }
+
+  Future<void> _loadBookings() async {
+    try {
+      print('🔄 Loading bookings...');
+      setState(() {
+        isLoading = true;
+      });
+
+      final allBookings = await _bookingService.getUserBookings();
+      print('📊 Total bookings found: ${allBookings.length}');
+
+      // Filter out test bookings and print each booking for debugging
+      final realBookings =
+          allBookings.where((booking) {
+            final serviceTitle =
+                (booking['serviceTitle'] ?? booking['title'] ?? '')
+                    .toString()
+                    .toLowerCase();
+            final isTestBooking = serviceTitle.contains('test');
+            if (!isTestBooking) {
+              print(
+                '📋 Real Booking: ${booking['serviceTitle']} - Status: ${booking['bookingStatus']}',
+              );
+            } else {
+              print(
+                '🧪 Test Booking (filtered): ${booking['serviceTitle']} - Status: ${booking['bookingStatus']}',
+              );
+            }
+            return !isTestBooking;
+          }).toList();
+
+      // Filter bookings by status (client-side filtering to avoid index issues)
+      final active =
+          realBookings
+              .where(
+                (booking) =>
+                    booking['bookingStatus'] == 'pending' ||
+                    booking['bookingStatus'] == 'confirmed',
+              )
+              .toList();
+      final completed =
+          realBookings
+              .where((booking) => booking['bookingStatus'] == 'completed')
+              .toList();
+      final cancelled =
+          realBookings
+              .where((booking) => booking['bookingStatus'] == 'cancelled')
+              .toList();
+
+      print('✅ Active bookings: ${active.length}');
+      print('✅ Completed bookings: ${completed.length}');
+      print('❌ Cancelled bookings: ${cancelled.length}');
+
+      setState(() {
+        activeBookings = active;
+        completedBookings = completed;
+        cancelledBookings = cancelled;
+        isLoading = false;
+      });
+
+      // Start animations after data is loaded
+      _startAnimations();
+    } catch (e) {
+      print('❌ Error loading bookings: $e');
+
+      // If it's an index error, try to load without ordering
+      if (e.toString().contains('requires an index')) {
+        print('🔄 Trying to load bookings without ordering...');
+        try {
+          final user = _bookingService.currentUser;
+          if (user == null) {
+            throw Exception('User not authenticated');
+          }
+
+          final query =
+              await _bookingService.bookingsCollection
+                  .where('userId', isEqualTo: user.uid)
+                  .get();
+
+          final allBookings =
+              query.docs
+                  .map(
+                    (doc) => {
+                      'bookingId': doc.id,
+                      ...doc.data() as Map<String, dynamic>,
+                    },
+                  )
+                  .toList();
+
+          final active =
+              allBookings
+                  .where(
+                    (booking) =>
+                        booking['bookingStatus'] == 'pending' ||
+                        booking['bookingStatus'] == 'confirmed',
+                  )
+                  .toList();
+          final completed =
+              allBookings
+                  .where((booking) => booking['bookingStatus'] == 'completed')
+                  .toList();
+          final cancelled =
+              allBookings
+                  .where((booking) => booking['bookingStatus'] == 'cancelled')
+                  .toList();
+
+          setState(() {
+            activeBookings = active;
+            completedBookings = completed;
+            cancelledBookings = cancelled;
+            isLoading = false;
+          });
+
+          _startAnimations();
+        } catch (fallbackError) {
+          print('❌ Fallback also failed: $fallbackError');
+          setState(() {
+            isLoading = false;
+          });
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   void _startAnimations() async {
@@ -55,128 +188,6 @@ class _MyBookingsPageState extends State<MyBookingsPage>
     _cancelledBookingsController.dispose();
     super.dispose();
   }
-
-  // Sample booking data - using services from home page
-  final List<Map<String, dynamic>> activeBookings = const [
-    {
-      'image': 'assets/images/image1.jpg',
-      'title': 'Professional Home Care Service',
-      'date': 'May 23',
-      'time': '4:30 PM',
-      'status': 'Active',
-      'price': '\$20/hr',
-    },
-    {
-      'image': 'assets/images/image2.jpg',
-      'title': 'Companion Care',
-      'date': 'May 24',
-      'time': '10:00 AM',
-      'status': 'Active',
-      'price': '\$25/hr',
-    },
-    {
-      'image': 'assets/images/image3.jpg',
-      'title': 'Family Caregiver Support',
-      'date': 'May 25',
-      'time': '2:00 PM',
-      'status': 'Active',
-      'price': '\$18.50/hr',
-    },
-    {
-      'image': 'assets/images/image4.jpg',
-      'title': 'Geriatric Caregiver',
-      'date': 'May 26',
-      'time': '9:00 AM',
-      'status': 'Active',
-      'price': '\$22/hr',
-    },
-    {
-      'image': 'assets/images/image5.jpg',
-      'title': 'Home Health Aide',
-      'date': 'May 27',
-      'time': '11:30 AM',
-      'status': 'Active',
-      'price': '\$24/hr',
-    },
-  ];
-
-  final List<Map<String, dynamic>> completedBookings = const [
-    {
-      'image': 'assets/images/image6.jpg',
-      'title': 'Respite Care',
-      'date': 'May 20',
-      'time': '3:00 PM',
-      'status': 'Completed',
-      'price': '\$21/hr',
-    },
-    {
-      'image': 'assets/images/image1.jpg',
-      'title': 'Professional Home Care Service',
-      'date': 'May 19',
-      'time': '11:00 AM',
-      'status': 'Completed',
-      'price': '\$20/hr',
-    },
-    {
-      'image': 'assets/images/image2.jpg',
-      'title': 'Companion Care',
-      'date': 'May 18',
-      'time': '1:00 PM',
-      'status': 'Completed',
-      'price': '\$25/hr',
-    },
-    {
-      'image': 'assets/images/image3.jpg',
-      'title': 'Family Caregiver Support',
-      'date': 'May 17',
-      'time': '2:30 PM',
-      'status': 'Completed',
-      'price': '\$18.50/hr',
-    },
-    {
-      'image': 'assets/images/image4.jpg',
-      'title': 'Geriatric Caregiver',
-      'date': 'May 16',
-      'time': '4:00 PM',
-      'status': 'Completed',
-      'price': '\$22/hr',
-    },
-  ];
-
-  final List<Map<String, dynamic>> cancelledBookings = const [
-    {
-      'image': 'assets/images/image5.jpg',
-      'title': 'Home Health Aide',
-      'date': 'May 15',
-      'time': '9:00 AM',
-      'status': 'Cancelled',
-      'price': '\$24/hr',
-    },
-    {
-      'image': 'assets/images/image6.jpg',
-      'title': 'Respite Care',
-      'date': 'May 14',
-      'time': '4:00 PM',
-      'status': 'Cancelled',
-      'price': '\$21/hr',
-    },
-    {
-      'image': 'assets/images/image1.jpg',
-      'title': 'Professional Home Care Service',
-      'date': 'May 13',
-      'time': '10:30 AM',
-      'status': 'Cancelled',
-      'price': '\$20/hr',
-    },
-    {
-      'image': 'assets/images/image2.jpg',
-      'title': 'Companion Care',
-      'date': 'May 12',
-      'time': '3:30 PM',
-      'status': 'Cancelled',
-      'price': '\$25/hr',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -217,42 +228,60 @@ class _MyBookingsPageState extends State<MyBookingsPage>
             ),
           ),
         ),
+        actions: [],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Active Bookings Section - slides in from left to right
-            _buildAnimatedBookingSection(
-              title: 'Active Bookings',
-              bookings: activeBookings,
-              isActive: true,
-              controller: _activeBookingsController,
-              slideFromLeft: true,
-            ),
+      body:
+          isLoading
+              ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0A84FF)),
+                ),
+              )
+              : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Active Bookings Section - slides in from left to right
+                    if (activeBookings.isNotEmpty)
+                      _buildAnimatedBookingSection(
+                        title: 'Active Bookings',
+                        bookings: activeBookings,
+                        isActive: true,
+                        controller: _activeBookingsController,
+                        slideFromLeft: true,
+                      ),
 
-            // Completed Bookings Section - slides in from right to left
-            _buildAnimatedBookingSection(
-              title: 'Completed Bookings',
-              bookings: completedBookings,
-              isActive: false,
-              controller: _completedBookingsController,
-              slideFromLeft: false,
-            ),
+                    // Completed Bookings Section - slides in from right to left
+                    if (completedBookings.isNotEmpty)
+                      _buildAnimatedBookingSection(
+                        title: 'Completed Bookings',
+                        bookings: completedBookings,
+                        isActive: false,
+                        controller: _completedBookingsController,
+                        slideFromLeft: false,
+                      ),
 
-            // Cancelled Bookings Section - slides in from left to right
-            _buildAnimatedBookingSection(
-              title: 'Cancelled Bookings',
-              bookings: cancelledBookings,
-              isActive: false,
-              isCancelled: true,
-              controller: _cancelledBookingsController,
-              slideFromLeft: true,
-            ),
+                    // Cancelled Bookings Section - slides in from left to right
+                    if (cancelledBookings.isNotEmpty)
+                      _buildAnimatedBookingSection(
+                        title: 'Cancelled Bookings',
+                        bookings: cancelledBookings,
+                        isActive: false,
+                        isCancelled: true,
+                        controller: _cancelledBookingsController,
+                        slideFromLeft: true,
+                      ),
 
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+                    // Empty state if no bookings
+                    if (activeBookings.isEmpty &&
+                        completedBookings.isEmpty &&
+                        cancelledBookings.isEmpty)
+                      _buildEmptyState(),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
     );
   }
 
@@ -297,52 +326,36 @@ class _MyBookingsPageState extends State<MyBookingsPage>
     return Container(
       margin: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Handle see all functionality
-                },
-                child: const Text(
-                  'See All',
-                  style: TextStyle(
-                    color: Color(0xFFFF9800),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 16),
 
-          // Horizontal Scrollable Cards
-          SizedBox(
-            height: 170,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-                return _buildBookingCard(
+          // Vertical Bookings List - No height constraints
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: bookings.length,
+            itemBuilder: (context, index) {
+              final booking = bookings[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildBookingCard(
                   context: context,
                   booking: booking,
                   isActive: isActive,
                   isCancelled: isCancelled,
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -356,184 +369,237 @@ class _MyBookingsPageState extends State<MyBookingsPage>
     bool isCancelled = false,
   }) {
     return Container(
-      width: 290,
-      height: 155,
-      margin: const EdgeInsets.only(right: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withOpacity(0.1),
             spreadRadius: 1,
-            blurRadius: 6,
-            offset: const Offset(0, 4),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left side - Image
-          Padding(
-            padding: const EdgeInsets.only(top: 10, left: 10),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                booking['image'],
-                width: 70,
-                height: 70,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.image, size: 24, color: Colors.grey[400]),
-                  );
-                },
-              ),
-            ),
-          ),
-
-          // Right side - Content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    booking['title'],
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title and Status Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    booking['serviceTitle'] ?? booking['title'] ?? 'Service',
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
-
-                  // Date & Time
-                  Text(
-                    '${booking['date']}, ${booking['time']}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isCancelled ? Colors.grey[400] : Colors.grey[600],
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  const SizedBox(height: 1),
-
-                  // Status
-                  Text(
-                    booking['status'],
+                  decoration: BoxDecoration(
+                    color:
+                        isCancelled
+                            ? Colors.grey[100]
+                            : isActive
+                            ? Colors.green[50]
+                            : Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    booking['bookingStatus'] ?? booking['status'] ?? 'Unknown',
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                       color:
                           isCancelled
-                              ? Colors.grey[400]
+                              ? Colors.grey[600]
                               : isActive
-                              ? Colors.green
-                              : Colors.blue,
+                              ? Colors.green[700]
+                              : Colors.blue[700],
                     ),
                   ),
-                  const SizedBox(height: 1),
+                ),
+              ],
+            ),
 
-                  // Price
-                  Text(
-                    booking['price'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF0A84FF),
+            const SizedBox(height: 8),
+
+            // Date & Time
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${booking['selectedDate'] ?? booking['date'] ?? 'Date'}, ${booking['selectedTime'] ?? booking['time'] ?? 'Time'}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isCancelled ? Colors.grey[400] : Colors.grey[600],
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
+              ],
+            ),
 
-                  const Spacer(),
+            const SizedBox(height: 8),
 
-                  // Buttons - Show for all booking types
-                  Row(
-                    children: [
-                      // Cancel Button
-                      SizedBox(
-                        width: 90,
-                        height: 28,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Booking cancelled'),
-                                backgroundColor: Colors.grey,
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFF0A84FF)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                          ),
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(
-                              color: Color(0xFF0A84FF),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-
-                      // Track Button
-                      SizedBox(
-                        width: 90,
-                        height: 28,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => TrackingScreen(
-                                      caregiverName: 'John Doe',
-                                      serviceType: booking['title'],
-                                      appointmentDateTime:
-                                          '${booking['date']} at ${booking['time']}',
-                                      paymentMethod: 'Credit Card',
-                                      totalAmount: booking['price'],
-                                    ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0A84FF),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                          ),
-                          child: const Text(
-                            'Track',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            // Price
+            Text(
+              booking['servicePrice'] ?? booking['price'] ?? '\$0',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0A84FF),
               ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Buttons - Full width row
+            Row(
+              children: [
+                // Cancel Button
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        final bookingId = booking['bookingId'] ?? '';
+                        if (bookingId.isNotEmpty) {
+                          await _bookingService.cancelBooking(bookingId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Booking cancelled'),
+                              backgroundColor: Colors.grey,
+                            ),
+                          );
+                          _loadBookings();
+                        }
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error cancelling booking: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF0A84FF)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Color(0xFF0A84FF),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Track Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => TrackingScreen(
+                                caregiverName:
+                                    booking['userName'] ?? 'Caregiver',
+                                serviceType:
+                                    booking['serviceTitle'] ??
+                                    booking['title'] ??
+                                    'Service',
+                                appointmentDateTime:
+                                    '${booking['selectedDate'] ?? booking['date'] ?? 'Date'} at ${booking['selectedTime'] ?? booking['time'] ?? 'Time'}',
+                                paymentMethod: 'Credit Card',
+                                totalAmount:
+                                    booking['servicePrice'] ??
+                                    booking['price'] ??
+                                    '\$0',
+                              ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A84FF),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'Track',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bookmark_border, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 20),
+          Text(
+            'No bookings yet',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your booked services will appear here',
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.home),
+            label: const Text('Browse Services'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0A84FF),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
         ],
