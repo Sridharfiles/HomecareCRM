@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homecarecrm/services/user_details_store_services.dart';
 import 'package:homecarecrm/static_data/countries_data.dart';
@@ -17,7 +18,6 @@ class _EditProfileState extends State<EditProfile> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _streetController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _stateController = TextEditingController();
   final TextEditingController _districtController = TextEditingController();
   final TextEditingController _pincodeController = TextEditingController();
@@ -28,6 +28,7 @@ class _EditProfileState extends State<EditProfile> {
   String? _selectedCountryCode;
   String? _selectedState;
   String? _selectedDistrict;
+  String _selectedCity = '';
   List<String> _availableStates = [];
   List<String> _availableDistricts = [];
   String? _userName;
@@ -68,14 +69,17 @@ class _EditProfileState extends State<EditProfile> {
           _lastNameController.text = userData['lastName'] ?? '';
           _phoneController.text = userData['phoneNumber'] ?? '';
           _streetController.text = userData['streetAddress'] ?? '';
-          _cityController.text = userData['city'] ?? '';
           _stateController.text = userData['state'] ?? '';
-          _districtController.text = userData['district'] ?? '';
+            _districtController.text =
+              (userData['city'] ?? userData['district'] ?? '').toString();
           _pincodeController.text = userData['pincode'] ?? '';
           _selectedCountry = userData['country'];
           _selectedCountryCode = userData['countryCode'];
           _selectedState = userData['state'];
-          _selectedDistrict = userData['district'];
+            _selectedDistrict =
+              (userData['city'] ?? userData['district'] ?? '').toString();
+            _selectedCity =
+              (userData['city'] ?? userData['district'] ?? '').toString();
 
           // Populate available states for selected country
           if (_selectedCountry != null) {
@@ -133,6 +137,7 @@ class _EditProfileState extends State<EditProfile> {
         _selectedCountryCode = country.dialCode;
         _selectedState = null;
         _selectedDistrict = null;
+        _selectedCity = '';
         _stateController.clear();
         _districtController.clear();
         _availableStates = getStatesForCountry(country.name);
@@ -146,6 +151,7 @@ class _EditProfileState extends State<EditProfile> {
       setState(() {
         _selectedState = stateName;
         _selectedDistrict = null;
+        _selectedCity = '';
         _districtController.clear();
         _availableDistricts = getDistrictsForState(
           _selectedCountry!,
@@ -159,6 +165,7 @@ class _EditProfileState extends State<EditProfile> {
     if (districtName != null) {
       setState(() {
         _selectedDistrict = districtName;
+        _selectedCity = districtName;
         _districtController.text = districtName;
       });
     }
@@ -171,7 +178,6 @@ class _EditProfileState extends State<EditProfile> {
     _emailController.dispose();
     _phoneController.dispose();
     _streetController.dispose();
-    _cityController.dispose();
     _stateController.dispose();
     _districtController.dispose();
     _pincodeController.dispose();
@@ -304,22 +310,6 @@ class _EditProfileState extends State<EditProfile> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Street Address
-                      _buildInputField(
-                        _streetController,
-                        Icons.home_outlined,
-                        'Street Address',
-                      ),
-                      const SizedBox(height: 12),
-
-                      // City
-                      _buildInputField(
-                        _cityController,
-                        Icons.location_city_outlined,
-                        'City',
-                      ),
-                      const SizedBox(height: 12),
-
                       // Country Dropdown
                       _buildCountryDropdown(),
                       const SizedBox(height: 12),
@@ -387,8 +377,15 @@ class _EditProfileState extends State<EditProfile> {
                       _buildStateDropdown(),
                       const SizedBox(height: 12),
 
-                      // District Dropdown
-                      _buildDistrictDropdown(),
+                      // City Dropdown
+                      _buildCityDropdown(),
+                      const SizedBox(height: 12),
+
+                      _buildInputField(
+                        _streetController,
+                        Icons.home_outlined,
+                        'Street Address',
+                      ),
                       const SizedBox(height: 12),
 
                       _buildInputField(
@@ -396,6 +393,7 @@ class _EditProfileState extends State<EditProfile> {
                         Icons.markunread_mailbox_outlined,
                         'Pincode',
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       ),
                       const SizedBox(height: 24),
 
@@ -527,7 +525,7 @@ class _EditProfileState extends State<EditProfile> {
     );
   }
 
-  Widget _buildDistrictDropdown() {
+  Widget _buildCityDropdown() {
     return Container(
       height: 50,
       decoration: BoxDecoration(
@@ -545,18 +543,18 @@ class _EditProfileState extends State<EditProfile> {
             Icon(Icons.location_on_outlined, color: Colors.grey[600], size: 20),
             const SizedBox(width: 12),
             Text(
-              'Select District',
+              'Select City',
               style: TextStyle(color: Colors.grey[500], fontSize: 14),
             ),
           ],
         ),
         items:
             _availableDistricts.map<DropdownMenuItem<String>>((
-              String district,
+              String city,
             ) {
               return DropdownMenuItem<String>(
-                value: district,
-                child: Text(district, style: const TextStyle(fontSize: 14)),
+                value: city,
+                child: Text(city, style: const TextStyle(fontSize: 14)),
               );
             }).toList(),
         onChanged: _selectedState != null ? _onDistrictSelected : null,
@@ -582,6 +580,7 @@ class _EditProfileState extends State<EditProfile> {
     String hint, {
     TextInputType keyboardType = TextInputType.text,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       height: 50,
@@ -594,6 +593,7 @@ class _EditProfileState extends State<EditProfile> {
         controller: controller,
         keyboardType: keyboardType,
         readOnly: readOnly,
+        inputFormatters: inputFormatters,
         style: const TextStyle(fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
@@ -620,6 +620,27 @@ class _EditProfileState extends State<EditProfile> {
       return;
     }
 
+    if ((_selectedDistrict ?? '').trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select city'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final pincode = _pincodeController.text.trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(pincode)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid pincode (6 digits only)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
@@ -629,7 +650,7 @@ class _EditProfileState extends State<EditProfile> {
         email: _emailController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
         streetAddress: _streetController.text.trim(),
-        city: _cityController.text.trim(),
+        city: (_selectedDistrict ?? _selectedCity).trim(),
         state: _selectedState ?? '',
         zipCode: _pincodeController.text.trim(),
         country: _selectedCountry ?? '',
@@ -650,6 +671,8 @@ class _EditProfileState extends State<EditProfile> {
             backgroundColor: Colors.green,
           ),
         );
+
+        Navigator.pop(context);
       }
     } catch (e) {
       print('Error saving user information: $e');

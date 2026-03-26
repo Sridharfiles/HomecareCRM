@@ -146,4 +146,46 @@ class UserDetailsStoreService {
       return null;
     }
   }
+
+  /// Submit caregiver application and update user role
+  Future<void> submitCaregiverApplication({
+    required String idType,
+    required String idFileName,
+    required List<Map<String, dynamic>> certifications,
+    required String? emergencyContact,
+    required String applyLetter,
+  }) async {
+    try {
+      User? currentUser = _firebaseAuth.currentUser;
+      if (currentUser == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      final caregiverData = {
+        'userId': currentUser.uid,
+        'userEmail': currentUser.email,
+        'idType': idType,
+        'idFileName': idFileName,
+        'certifications': certifications,
+        'emergencyContact': emergencyContact ?? '',
+        'applyLetter': applyLetter,
+        'status': 'pending',
+        'submittedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore.collection('caregivers').add(caregiverData);
+
+      await _firestore.collection('users').doc(currentUser.uid).update({
+        'role': 'pendingcaregiver',
+        'caregiverApplicationSubmittedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Caregiver application submitted successfully');
+    } catch (e) {
+      print('Error submitting caregiver application: $e');
+      rethrow;
+    }
+  }
 }

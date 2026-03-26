@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:homecarecrm/screens/Menu/analytics_page/analytics_page.dart';
 import 'package:homecarecrm/screens/Menu/availability_page/availability_page.dart';
 import 'package:homecarecrm/screens/Menu/favorite_page/favorite_page.dart';
@@ -31,11 +33,408 @@ class SlideDrawer extends StatefulWidget {
 
 class _SlideDrawerState extends State<SlideDrawer> {
   late GoogleSignInService _googleSignInService;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
     _googleSignInService = GoogleSignInService();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(currentUser.uid).get();
+
+        String resolvedRole = 'user';
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          if (data is Map<String, dynamic>) {
+            final roleValue = (data['role'] ?? '').toString().trim().toLowerCase();
+            if (roleValue.isNotEmpty) {
+              resolvedRole = roleValue;
+            }
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _userRole = resolvedRole;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching user role: $e');
+    }
+  }
+
+  List<Widget> _buildMenuItems() {
+    // Admin users only see: Homepage, Profile, Reviews, Settings, Logout
+    if (_userRole == 'admin') {
+      return [
+        _buildMenuItem(
+          icon: Icons.home,
+          title: 'Homepage',
+          onTap: () {
+            Navigator.pop(context);
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.person,
+          title: 'Profile',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfilePage(),
+              ),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.reviews,
+          title: 'Reviews',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReviewScreen(),
+              ),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.settings,
+          title: 'Settings',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        const Divider(
+          height: 1,
+          thickness: 1,
+          indent: 20,
+          endIndent: 20,
+          color: Colors.grey,
+        ),
+        const SizedBox(height: 8),
+        _buildMenuItem(
+          icon: Icons.logout,
+          title: 'Log Out',
+          onTap: () async {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Log Out'),
+                  content: const Text(
+                    'Are you sure you want to log out?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _googleSignInService.signOut();
+                        if (mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            '/login',
+                            (Route<dynamic> route) => false,
+                          );
+                        }
+                      },
+                      child: const Text('Log Out'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ];
+    }
+
+    // Caregiver users only see: Homepage, History, Profile, Reviews, Settings, Logout
+    if (_userRole == 'caregiver') {
+      return [
+        _buildMenuItem(
+          icon: Icons.home,
+          title: 'Homepage',
+          onTap: () {
+            Navigator.pop(context);
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.history,
+          title: 'History',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HistoryPage(),
+              ),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.person,
+          title: 'Profile',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProfilePage(),
+              ),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.reviews,
+          title: 'Reviews',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ReviewScreen(),
+              ),
+            );
+          },
+        ),
+        _buildMenuItem(
+          icon: Icons.settings,
+          title: 'Settings',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        const Divider(
+          height: 1,
+          thickness: 1,
+          indent: 20,
+          endIndent: 20,
+          color: Colors.grey,
+        ),
+        const SizedBox(height: 8),
+        _buildMenuItem(
+          icon: Icons.logout,
+          title: 'Log Out',
+          onTap: () async {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Log Out'),
+                  content: const Text(
+                    'Are you sure you want to log out?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _googleSignInService.signOut();
+                        if (mounted) {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            '/login',
+                            (Route<dynamic> route) => false,
+                          );
+                        }
+                      },
+                      child: const Text('Log Out'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ];
+    }
+
+    // Default menu for non-admin users
+    return [
+      _buildMenuItem(
+        icon: Icons.home,
+        title: 'Homepage',
+        onTap: () {
+          Navigator.pop(context);
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.star,
+        title: 'TopCaregivers',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TopCaregiversScreen(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.history,
+        title: 'History',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HistoryPage(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.favorite,
+        title: 'Favorite',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FavoriteCaregiverScreen(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.search,
+        title: 'Search',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SearchScreen(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.calendar_month,
+        title: 'MyBookings',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyBookingsPage(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.message,
+        title: 'Messages',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MessagesPage()),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.person,
+        title: 'Profile',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProfilePage(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.reviews,
+        title: 'Reviews',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ReviewScreen(),
+            ),
+          );
+        },
+      ),
+      _buildMenuItem(
+        icon: Icons.settings,
+        title: 'Settings',
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SettingsScreen(),
+            ),
+          );
+        },
+      ),
+      const SizedBox(height: 8),
+      const Divider(
+        height: 1,
+        thickness: 1,
+        indent: 20,
+        endIndent: 20,
+        color: Colors.grey,
+      ),
+      const SizedBox(height: 8),
+      _buildMenuItem(
+        icon: Icons.logout,
+        title: 'Log Out',
+        onTap: () async {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Log Out'),
+                content: const Text(
+                  'Are you sure you want to log out?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await _googleSignInService.signOut();
+                      if (mounted) {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          '/login',
+                          (Route<dynamic> route) => false,
+                        );
+                      }
+                    },
+                    child: const Text('Log Out'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    ];
   }
 
   @override
@@ -57,24 +456,22 @@ class _SlideDrawerState extends State<SlideDrawer> {
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
                     shape: BoxShape.circle,
-                    image:
-                        _googleSignInService.getUserPhotoUrl() != null
-                            ? DecorationImage(
-                              image: NetworkImage(
-                                _googleSignInService.getUserPhotoUrl()!,
-                              ),
-                              fit: BoxFit.cover,
-                            )
-                            : null,
-                  ),
-                  child:
-                      _googleSignInService.getUserPhotoUrl() == null
-                          ? Icon(
-                            Icons.person,
-                            size: 35,
-                            color: Colors.grey[600],
+                    image: _googleSignInService.getUserPhotoUrl() != null
+                        ? DecorationImage(
+                            image: NetworkImage(
+                              _googleSignInService.getUserPhotoUrl()!,
+                            ),
+                            fit: BoxFit.cover,
                           )
-                          : null,
+                        : null,
+                  ),
+                  child: _googleSignInService.getUserPhotoUrl() == null
+                      ? Icon(
+                          Icons.person,
+                          size: 35,
+                          color: Colors.grey[600],
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 // User Info
@@ -96,11 +493,59 @@ class _SlideDrawerState extends State<SlideDrawer> {
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _googleSignInService.getUserEmail() ?? '',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
                           fontWeight: FontWeight.w400,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 6),
+                      if (_userRole == 'admin' || _userRole == 'caregiver')
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE3F2FD),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: const Color(0xFF1E88E5),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _userRole == 'admin'
+                                    ? Icons.admin_panel_settings
+                                    : Icons.volunteer_activism,
+                                size: 12,
+                                color: Color(0xFF1E88E5),
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                _userRole == 'admin' ? 'Admin' : 'Caregiver',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF1E88E5),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -112,301 +557,7 @@ class _SlideDrawerState extends State<SlideDrawer> {
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
-              children: [
-                _buildMenuItem(
-                  icon: Icons.home,
-                  title: 'Homepage',
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.star,
-                  title: 'TopCaregivers',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TopCaregiversScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.monitor_heart,
-                  title: 'HealthMonitoring',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HealthMonitoringPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.history,
-                  title: 'History',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HistoryPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.calendar_today,
-                  title: 'TaskSchedule',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const TaskScheduleManagementScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.check_circle_outline,
-                  title: 'ScreeningTest',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ScreeningTestScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.article,
-                  title: 'Prescriptions',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const DocumentsPrescriptionsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.medical_services,
-                  title: 'Medication',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MedicationScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.access_time,
-                  title: 'Availability',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AvailabilityScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.bar_chart,
-                  title: 'Analytics',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AnalyticsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.favorite,
-                  title: 'Favorite',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FavoriteCaregiverScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.search,
-                  title: 'Search',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SearchScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.bookmark,
-                  title: 'Bookmark',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => BookmarkedPage()),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.calendar_month,
-                  title: 'MyBookings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyBookingsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.monetization_on,
-                  title: 'Earnings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EarningsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.subscriptions,
-                  title: 'Subscriptions',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SubscriptionPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.wallet,
-                  title: 'Wallet',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WalletPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.message,
-                  title: 'Messages',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => MessagesPage()),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.person,
-                  title: 'Profile',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfilePage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.reviews,
-                  title: 'Reviews',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ReviewScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.settings,
-                  title: 'Settings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 8),
-                const Divider(
-                  height: 1,
-                  thickness: 1,
-                  indent: 20,
-                  endIndent: 20,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 8),
-                _buildMenuItem(
-                  icon: Icons.logout,
-                  title: 'Log Out',
-                  onTap: () async {
-                    // Show confirmation dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Log Out'),
-                          content: const Text(
-                            'Are you sure you want to log out?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                await _googleSignInService.signOut();
-                                if (mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const Login(),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text('Log Out'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
+              children: _buildMenuItems(),
             ),
           ),
         ],
